@@ -1,63 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Hangman: Harvest Town</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hangman: Harvest Town Edition — Fixed</title>
   <style>
-    :root{--bg:#0f172a;--surface:#111827;--muted:#1f2937;--text:#ffffff;--accent:#60a5fa;--kbd-muted:#94a3b8;--good:#34d399;--bad:#f87171;--warn:#fbbf24}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";background:var(--bg);color:var(--text)}
-    .container{max-width:1100px;margin:0 auto;padding:24px}
-    .card{background:var(--surface);border:1px solid #1f2937;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    h1,h2,h3{margin:0 0 12px}
-    .grid{display:grid;gap:16px}
-    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .btn{appearance:none;background:var(--muted);color:var(--text);border:1px solid #374151;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:600}
-    .btn-primary{background:var(--accent);color:#071126}
-    .btn-good{background:var(--good);color:#052e1e}
-    .input,textarea{width:100%;background:#0b1220;color:var(--text);border:1px solid #334155;border-radius:12px;padding:10px 12px}
-    .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:36px;padding:8px 10px;border-radius:10px;border:1px solid #334155;background:#0b1220;font-weight:700;margin:4px;color:#ffffff}
-    .kbd:hover:not([disabled]){color:var(--accent);transform:translateY(-2px)}
-    .kbd[disabled]{opacity:.45;cursor:not-allowed;color:var(--kbd-muted)}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .pill{padding:6px 10px;border-radius:999px;border:1px solid #374151;background:#0b1220;font-weight:700}
-    .hidden{display:none!important}
-    .word{letter-spacing:.3em;font-size:36px;font-weight:800;text-align:center;padding:12px 16px;border-radius:12px;background:#0b1220;border:1px dashed #334155}
-    .progress{width:100%;background:#0b1220;border:1px solid #334155;border-radius:12px;overflow:hidden;height:12px}
-    .bar{height:100%;background:var(--accent);width:0%;transition:width .3s}
-    table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid #243041;padding:10px;text-align:left}
-    .hangman{min-height:140px;display:flex;align-items:center;justify-content:center}
-    .gallows{font-family:"Courier New",monospace;white-space:pre;line-height:1.05}
-    .footnote{font-size:12px;opacity:.85}
-    .tag{font-size:12px;opacity:.9}
-    .center{text-align:center}
-    .leader-toggle{margin-top:12px}
+    :root {
+      --bg: #0f172a;
+      --surface: #111827;
+      --muted: #1f2937;
+      --text: #e5e7eb;
+      --accent: #60a5fa;
+      --good: #34d399;
+      --bad: #f87171;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color: var(--text); }
+    
+    /* Banner Styles */
+    .banner {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #2563eb 0%, #059669 25%, #d97706 50%, #dc2626 75%, #7c3aed 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 8s ease infinite;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none"><path d="M0 100c50-20 100-40 150-20s100 40 150 20s100-40 150-20v100H0z" fill="rgba(255,255,255,0.1)"/><path d="M0 120c50-15 100-30 150-15s100 30 150 15s100-30 150-15v80H0z" fill="rgba(255,255,255,0.05)"/></svg>') no-repeat center;
+      background-size: cover;
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .banner-content {
+      text-align: center;
+      z-index: 2;
+      position: relative;
+    }
+    
+    .banner-title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.3);
+      margin: 0 0 8px 0;
+      letter-spacing: -0.02em;
+    }
+    
+    .banner-subtitle {
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.9);
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+      margin: 0;
+    }
+    
+    .banner-icons {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 2rem;
+      animation: bounce 3s infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+    
+    @media (max-width: 768px) {
+      .banner {
+        height: 150px;
+      }
+      .banner-title {
+        font-size: 2.5rem;
+      }
+      .banner-subtitle {
+        font-size: 1rem;
+      }
+      .banner-icons {
+        font-size: 1.5rem;
+        right: 20px;
+        top: 15px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .banner {
+        height: 120px;
+      }
+      .banner-title {
+        font-size: 2rem;
+      }
+      .banner-subtitle {
+        font-size: 0.9rem;
+      }
+    }
+    .card { background: var(--surface); border: 1px solid #1f2937; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+    h1,h2,h3{ margin:0 0 12px }
+    .grid { display:grid; gap:16px }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .btn{ appearance:none; background:var(--muted); color:var(--text); border:1px solid #374151; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600 }
+    .btn:hover{ background:#374151 }
+    .btn-primary{ background:var(--accent); color:#071126 }
+    .btn-good{ background:var(--good); color:#052e1e }
+    .input, textarea { width:100%; background:#0b1220; color:var(--text); border:1px solid #334155; border-radius:12px; padding:10px 12px }
+    .kbd{ display:inline-flex; align-items:center; justify-content:center; min-width:32px; padding:6px 8px; border-radius:10px; border:1px solid #334155; background:#0b1220; font-weight:700; margin:4px; cursor:pointer; color:#ffffff }
+    .kbd:hover:not([disabled]){ color:var(--accent); transform:translateY(-2px) }
+    .kbd[disabled]{ opacity:.45; cursor:not-allowed; color:#ffffff }
+    .row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap }
+    .pill{ padding:6px 10px; border-radius:999px; border:1px solid #374151; background:#0b1220; font-weight:700 }
+    .hidden{ display:none !important }
+    .word{ letter-spacing:.3em; font-size:36px; font-weight:800; text-align:center; padding:12px 16px; border-radius:12px; background:#0b1220; border:1px dashed #334155 }
+    .progress{ width:100%; background:#0b1220; border:1px solid #334155; border-radius:12px; overflow:hidden; height:12px }
+    .bar{ height:100%; background:var(--accent); width:0%; transition:width .3s }
+    table{ width:100%; border-collapse:collapse }
+    th,td{ border-bottom:1px solid #243041; padding:10px; text-align:left }
+    .hangman{ min-height:140px; display:flex; align-items:center; justify-content:center }
+    .gallows{ font-family: "Courier New", monospace; white-space:pre; line-height:1.05 }
+    .footnote{ font-size:12px; opacity:.85 }
+    .tag{ font-size:12px; opacity:.9 }
+    .center{ text-align:center }
     @media (max-width:700px){.grid-2{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Login Screen -->
     <div class="card" id="screen-login">
-      <h1>🔐 Hangman: Harvest Town — Player Login</h1>
+      <h1>🔐 Hangman: Harvest Town Edition— Player Login</h1>
       <p>Enter your IGN and Player ID to play. Words are curated by the Host.</p>
+      <h3>HOW TO PLAY: <h3>
+        <h4><li>Guess one letter at a time. Correct guesses reveal letters.
+        <li>Wrong guesses draw the hangman. You have limited lives.
+        <li>Reveal the answer before you run out of lives. Goodluck!<h4>
       <div class="grid grid-2">
         <div>
           <label for="ign">IGN</label>
-          <input id="ign" class="input" placeholder="e.g. GM HarYu" maxlength="24" />
+          <input id="ign" class="input" placeholder="e.g. GM HarYu" maxlength="50" />
         </div>
         <div>
           <label for="pid">Player ID</label>
-          <input id="pid" class="input" placeholder="e.g. 13399604" maxlength="24" />
+          <input id="pid" class="input" placeholder="e.g. 13399604" maxlength="8" />
         </div>
       </div>
       <div class="row" style="margin-top:12px;justify-content:space-between;">
         <div class="footnote">After game ends (30 rounds), your score is added to the local ranking.</div>
         <button id="btnStart" class="btn btn-primary">Start Game</button>
       </div>
-      <div class="center leader-toggle">
+      <div class="center" style="margin-top:12px">
         <button id="toggleLeaderboardBtn" class="btn">View Leaderboard</button>
       </div>
       <table id="leaderboardLoginTable" class="hidden" style="margin:12px auto;width:90%;max-width:700px">
@@ -66,13 +182,14 @@
       </table>
       <hr style="margin:18px 0;border-color:#1f2937" />
       <details>
-        <summary>🛠️ Host Settings (words & options) — protected</summary>
+        <summary>🛠️ Settings(host only)</summary>
         <div style="margin-top:12px">
           <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
             <label style="min-width:130px">Enter Host Passcode</label>
             <input id="hostPass" class="input" type="password" placeholder="passcode" style="max-width:280px" />
             <button id="btnCheckPassword" class="btn">Unlock Host Settings</button>
-            <div class="footnote" style="margin-left:6px">Default passcode: <code id="passnote">host123</code></div>
+            <div id="hiddenContent" style="display: none;">
+            <div class="footnote" style="margin-left:6px">Passcode: <code id="passnote">HTGMHARYU1324</code></div>
           </div>
           <div id="hostControls" class="hidden" style="margin-top:12px">
             <div class="grid grid-3">
@@ -115,6 +232,8 @@
         </div>
       </details>
     </div>
+
+    <!-- Game Screen -->
     <div id="screen-game" class="card hidden">
       <div class="row" style="justify-content:space-between;align-items:flex-start">
         <div>
@@ -148,6 +267,8 @@
         <div class="row"><span class="pill">Incorrect: <b id="misses">0</b></span><span class="pill">Correct: <b id="hits">0</b></span></div>
       </div>
     </div>
+
+    <!-- Final Screen -->
     <div id="screen-finale" class="card hidden">
       <h2>🏁 Game Over — Final Score</h2>
       <p id="finalLine"></p>
@@ -164,112 +285,363 @@
       </div>
     </div>
   </div>
+
   <script>
+    // Storage and Configuration
     const STORAGE_KEYS = { host: 'hangman_host_config_v1', rank: 'hangman_rankings_v1' };
-    const DEFAULT_WORDS = {
-      easy: `apple\nchair\nriver\nplanet\ncloud\nrobot\nfriend\nwindow\nlemon\nbanana\norange\nmonkey\nforest\nshadow\nkitten\npizza\nblanket\ncoffee\nbridge\nsunset\nkeyboard\nschool\nfamily\nmusic\nnovel\nbutton\ntravel\nrocket\npepper\nmagnet`,
-      medium: `gravity\npolygon\noxygen\nlantern\nquantum\norchard\ncompass\nfracture\nneutral\ncrystal\ndescent\ntexture\narchive\nblossom\nspectrum\nvoltage\nbreeze\ncapstone\nmarbles\nplasma\napricot\nmiracle\nwhisper\ntrident\nreticle\nventure\ncarrier\nresolve\nmetrics\nswitcher`,
-      hard: `juxtapose\nmnemonic\nzephyr\nquixotic\nbyzantine\nchiaroscuro\nsyzygy\nschadenfreude\nflummox\ndichotomy\naxiomatic\nobfuscate\nquarantine\nrendezvous\nparadigm\nreconnaissance\nknapsack\nmnemonics\npsoriasis\nbourgeois\nukulele\nquizzical\npterodactyl\nclaustrophobia\nptomaine\nrhythmic\nsubterfuge\nconscientious\nanachronism\nhyperbole`
+    
+    const DEFAULT_WORDS = {      
+      easy: `apple\nmanor\nhoe\ncow\nsheep\nchicken\npeacock\npig\nmilk\negg\nbarn\nonion\ngarlic\nwheat\neel\npeachvblueberry\nrose\ntulips\nbarl\nabu\nstone\nfoxy\nfay\nmay\npotato\nbean\ntomato\nmango\npumpkin\nbanana\ngrape\ntofu`,
+      medium: `sunflower\nnapa cabbage\nmallow root\nvegetable juice\norange juice\nshiitake sauce\ncurry sauce\ncopper ingot\nrefined quartz\nmiddle bait\npoultry feed\napple milkshake\nred piranha\nstone fish\nsturgeon\ngarra lamta\nstarfish\nskipjack tuna\ncherry pie\nsweet carp\nseaweed dish\nfried egg\ntangerine pudding\nlocket\nbrooch\nice cream\nfishing rod\nshovel\ndark essence`,
+      hard: `ella cole\ntom cole\nandy reed\nbonfire party\nbeach party\nhair-caring ginseng powder\ncordyceps powdervginseng powder\ngastrodia powder\nbanana crisp\nchocolate bar\near-shaped cracker\nspicy fish head\nsauteed wax gourd\nyolk-baked corn\ngrass carp sashimi\nspider necklace\nshell crown\nmilk pudding\nblueberry pie\npumpkin cake\nhoneysuckle tea\ncooling tea\nqueen scale powder\nscale powder\nmary morris\nsteve lopez`
     };
+    
     const DEFAULT_CONFIG = { 
-      passcode:'HARYUHEHEHE1234', 
+      passcode: 'HTGMHARYU1324', 
       lives: 6, 
-      scoreBase: { E: 10, M: 20, H: 30 }, 
-      words: { E: DEFAULT_WORDS.easy.split('\n'), M: DEFAULT_WORDS.medium.split('\n'), H: DEFAULT_WORDS.hard.split('\n') } 
+      scoreBase: { E: 1, M: 3, H: 5 }, 
+      words: { 
+        E: DEFAULT_WORDS.easy.split('\n'), 
+        M: DEFAULT_WORDS.medium.split('\n'), 
+        H: DEFAULT_WORDS.hard.split('\n') 
+      } 
     };
-    function loadHostConfig(){try{const raw = localStorage.getItem(STORAGE_KEYS.host);if(!raw) return structuredClone(DEFAULT_CONFIG);const cfg = JSON.parse(raw);cfg.passcode = cfg.passcode || DEFAULT_CONFIG.passcode;cfg.lives = Number(cfg.lives || DEFAULT_CONFIG.lives);cfg.scoreBase = cfg.scoreBase || DEFAULT_CONFIG.scoreBase;cfg.words = cfg.words || DEFAULT_CONFIG.words;return cfg}catch(e){return structuredClone(DEFAULT_CONFIG)}}
-    function saveHostConfig(cfg){ localStorage.setItem(STORAGE_KEYS.host, JSON.stringify(cfg)); }
-    function getRanking(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEYS.rank) || '[]'); }catch(e){ return []; } }
-    function saveRanking(list){ localStorage.setItem(STORAGE_KEYS.rank, JSON.stringify(list)); }
-    const ign = document.getElementById('ign');
-    const pid = document.getElementById('pid');
-    const btnStart = document.getElementById('btnStart');
-    const hostPass = document.getElementById('hostPass');
-    const btnCheckPassword = document.getElementById('btnCheckPassword');
-    const hostControls = document.getElementById('hostControls');
-    const passnote = document.getElementById('passnote');
-    const livesPerRound = document.getElementById('livesPerRound');
-    const scoreE = document.getElementById('scoreE');
-    const scoreM = document.getElementById('scoreM');
-    const scoreH = document.getElementById('scoreH');
-    const wordsE = document.getElementById('wordsE');
-    const wordsM = document.getElementById('wordsM');
-    const wordsH = document.getElementById('wordsH');
-    const btnApplyHost = document.getElementById('btnApplyHost');
-    const btnLockHost = document.getElementById('btnLockHost');
-    const btnClearLeaderboard = document.getElementById('btnClearLeaderboard');
-    const screenLogin = document.getElementById('screen-login');
-    const screenGame = document.getElementById('screen-game');
-    const screenFinale = document.getElementById('screen-finale');
-    const playerTag = document.getElementById('playerTag');
-    const roundInfo = document.getElementById('roundInfo');
-    const phaseInfo = document.getElementById('phaseInfo');
-    const difficultyPill = document.getElementById('difficultyPill');
-    const livesInfo = document.getElementById('livesInfo');
-    const scoreInfo = document.getElementById('scoreInfo');
-    const progBar = document.getElementById('progBar');
-    const gallows = document.getElementById('gallows');
-    const wordDisplay = document.getElementById('wordDisplay');
-    const hintArea = document.getElementById('hintArea');
-    const statusMsg = document.getElementById('statusMsg');
-    const keyboardEl = document.getElementById('keyboard');
-    const usedLetters = document.getElementById('usedLetters');
-    const misses = document.getElementById('misses');
-    const hits = document.getElementById('hits');
-    const rankBody = document.getElementById('rankBody');
-    const finalLine = document.getElementById('finalLine');
-    const breakdown = document.getElementById('breakdown');
-    const leaderboardLoginTable = document.querySelector('#leaderboardLoginTable tbody');
-    const toggleLeaderboardBtn = document.getElementById('toggleLeaderboardBtn');
-    const btnClearLeaderboardHost = document.getElementById('btnClearLeaderboard');
-    const btnLockHost = document.getElementById('btnLockHost');
-    const btnApplyHost = document.getElementById('btnApplyHost');
-    const wordsEarea = document.getElementById('wordsE');
-    const wordsMarea = document.getElementById('wordsM');
-    const wordsHarea = document.getElementById('wordsH');
-    const livesInput = document.getElementById('livesPerRound');
-    const scoreEInput = document.getElementById('scoreE');
-    const scoreMInput = document.getElementById('scoreM');
-    const scoreHInput = document.getElementById('scoreH');
-    const hostCfg = loadHostConfig();
-    if(passnote) passnote.textContent = hostCfg.passcode;
-    if(wordsEarea) wordsEarea.value = (hostCfg.words && hostCfg.words.E ? hostCfg.words.E.join('\n') : DEFAULT_WORDS.easy);
-    if(wordsMarea) wordsMarea.value = (hostCfg.words && hostCfg.words.M ? hostCfg.words.M.join('\n') : DEFAULT_WORDS.medium);
-    if(wordsHarea) wordsHarea.value = (hostCfg.words && hostCfg.words.H ? hostCfg.words.H.join('\n') : DEFAULT_WORDS.hard);
-    if(livesInput) livesInput.value = hostCfg.lives;
-    if(scoreEInput) scoreEInput.value = hostCfg.scoreBase.E;
-    if(scoreMInput) scoreMInput.value = hostCfg.scoreBase.M;
-    if(scoreHInput) scoreHInput.value = hostCfg.scoreBase.H;
-    function checkPassword(){const attempt = (hostPass && hostPass.value || '').trim();if(!attempt){alert('Enter host passcode.');return;}if(attempt === hostCfg.passcode){if(hostControls) hostControls.classList.remove('hidden');hostPass.value = '';hostPass.blur();}else{alert('Incorrect host passcode.')}}
-    function lockHostControls(){if(hostControls) hostControls.classList.add('hidden');if(hostPass) hostPass.value = ''}
-    if(btnCheckPassword) btnCheckPassword.addEventListener('click', checkPassword);
-    if(btnLockHost) btnLockHost.addEventListener('click', lockHostControls);
-    if(btnApplyHost){btnApplyHost.addEventListener('click', () => {const pass = (hostPass && hostPass.value || '').trim();if(!hostControls.classList.contains('hidden') || pass === hostCfg.passcode){const clean = s => (s||'').split('\n').map(w => w.trim().toLowerCase()).filter(Boolean);hostCfg.words = { E: Array.from(new Set(clean(wordsEarea.value || ''))), M: Array.from(new Set(clean(wordsMarea.value || ''))), H: Array.from(new Set(clean(wordsHarea.value || ''))) };hostCfg.lives = Math.max(3, Math.min(10, Number(livesInput.value || 6)));hostCfg.scoreBase = { E: Number(scoreEInput.value || 10), M: Number(scoreMInput.value || 20), H: Number(scoreHInput.value || 30) };saveHostConfig(hostCfg);alert('Host settings applied and saved locally.');lockHostControls();}else{alert('You must unlock host settings with the correct passcode before applying.')}})}
-    if(btnClearLeaderboardHost) btnClearLeaderboardHost.addEventListener('click', () => {if(confirm('Are you sure you want to clear all scores? This action cannot be undone.')){localStorage.removeItem(STORAGE_KEYS.rank);renderRanking();alert('Leaderboard cleared!')}});
+
+    // Storage Functions
+    function loadHostConfig() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.host);
+        if (!raw) return structuredClone(DEFAULT_CONFIG);
+        return JSON.parse(raw);
+      } catch (e) {
+        return structuredClone(DEFAULT_CONFIG);
+      }
+    }
+
+    function saveHostConfig(cfg) { 
+      localStorage.setItem(STORAGE_KEYS.host, JSON.stringify(cfg)); 
+    }
+
+    function getRanking() { 
+      try { 
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.rank) || '[]'); 
+      } catch (e) { 
+        return []; 
+      } 
+    }
+
+    function saveRanking(list) { 
+      localStorage.setItem(STORAGE_KEYS.rank, JSON.stringify(list)); 
+    }
+
+    // Initialize
+    let hostCfg = loadHostConfig();
+    
+    // DOM Elements
+    const elements = {
+      ign: document.getElementById('ign'),
+      pid: document.getElementById('pid'),
+      btnStart: document.getElementById('btnStart'),
+      hostPass: document.getElementById('hostPass'),
+      btnCheckPassword: document.getElementById('btnCheckPassword'),
+      hostControls: document.getElementById('hostControls'),
+      passnote: document.getElementById('passnote'),
+      livesPerRound: document.getElementById('livesPerRound'),
+      scoreE: document.getElementById('scoreE'),
+      scoreM: document.getElementById('scoreM'),
+      scoreH: document.getElementById('scoreH'),
+      wordsE: document.getElementById('wordsE'),
+      wordsM: document.getElementById('wordsM'),
+      wordsH: document.getElementById('wordsH'),
+      btnApplyHost: document.getElementById('btnApplyHost'),
+      btnLockHost: document.getElementById('btnLockHost'),
+      btnClearLeaderboard: document.getElementById('btnClearLeaderboard'),
+      screenLogin: document.getElementById('screen-login'),
+      screenGame: document.getElementById('screen-game'),
+      screenFinale: document.getElementById('screen-finale'),
+      playerTag: document.getElementById('playerTag'),
+      roundInfo: document.getElementById('roundInfo'),
+      phaseInfo: document.getElementById('phaseInfo'),
+      difficultyPill: document.getElementById('difficultyPill'),
+      livesInfo: document.getElementById('livesInfo'),
+      scoreInfo: document.getElementById('scoreInfo'),
+      progBar: document.getElementById('progBar'),
+      gallows: document.getElementById('gallows'),
+      wordDisplay: document.getElementById('wordDisplay'),
+      statusMsg: document.getElementById('statusMsg'),
+      keyboardEl: document.getElementById('keyboard'),
+      usedLetters: document.getElementById('usedLetters'),
+      misses: document.getElementById('misses'),
+      hits: document.getElementById('hits'),
+      rankBody: document.getElementById('rankBody'),
+      finalLine: document.getElementById('finalLine'),
+      breakdown: document.getElementById('breakdown'),
+      leaderboardLoginTable: document.querySelector('#leaderboardLoginTable tbody'),
+      toggleLeaderboardBtn: document.getElementById('toggleLeaderboardBtn')
+    };
+
+    // Initialize display
+    elements.passnote.textContent = hostCfg.passcode;
+    elements.wordsE.value = hostCfg.words.E.join('\n');
+    elements.wordsM.value = hostCfg.words.M.join('\n');
+    elements.wordsH.value = hostCfg.words.H.join('\n');
+    elements.livesPerRound.value = hostCfg.lives;
+    elements.scoreE.value = hostCfg.scoreBase.E;
+    elements.scoreM.value = hostCfg.scoreBase.M;
+    elements.scoreH.value = hostCfg.scoreBase.H;
+
+    // Game State
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    const state = { ign:'', pid:'', totalRounds:30, roundsPerTier:10, tier:'E', tierIndex:0, round:1, word:'', revealed:[], used:new Set(), lives:hostCfg.lives, misses:0, hits:0, score:0, breakdown:[], pools:{E:[],M:[],H:[]} };
-    function initPools(){state.pools.E = shuffle([...hostCfg.words.E]);state.pools.M = shuffle([...hostCfg.words.M]);state.pools.H = shuffle([...hostCfg.words.H])}
-    function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr}
-    function nextTierAndIndex(){if(state.round<=10){state.tier='E';state.tierIndex=state.round-1}else if(state.round<=20){state.tier='M';state.tierIndex=state.round-11}else{state.tier='H';state.tierIndex=state.round-21}}
-    function drawGallows(l){const stages=[`  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========`,`  +---+\n  |   |\n  O   |\n      |\n      |\n      |\n=========`,`  +---+\n  |   |\n  O   |\n  |   |\n      |\n      |\n=========`,`  +---+\n  |   |\n  O   |\n /|   |\n      |\n      |\n=========`,`  +---+\n  |   |\n  O   |\n /|\\  |\n      |\n      |\n=========`,`  +---+\n  |   |\n  O   |\n /|\\  |\n /    |\n      |\n=========`,`  +---+\n  |   |\n  O   |\n /|\\  |\n / \\ |\n      |\n=========`];const maxLives=Number(hostCfg.lives)||6;const idx=Math.max(0,Math.min(stages.length-1,maxLives-l));if(gallows) gallows.textContent=stages[idx]}
-    function updateHUD(){if(playerTag) playerTag.textContent=`${state.ign} — ${state.pid}`;if(roundInfo) roundInfo.textContent=`${state.round} / ${state.totalRounds}`;const tierName=state.tier==='E'?'Easy':(state.tier==='M'?'Medium':'Hard');if(phaseInfo) phaseInfo.textContent=`${tierName} ${state.tierIndex+1}/10`;if(difficultyPill) difficultyPill.textContent=tierName;if(livesInfo) livesInfo.textContent=state.lives;if(scoreInfo) scoreInfo.textContent=state.score;if(misses) misses.textContent=state.misses;if(hits) hits.textContent=state.hits;if(progBar) progBar.style.width=`${((state.round-1)/state.totalRounds)*100}%`;if(usedLetters) usedLetters.textContent='Used: '+(Array.from(state.used).sort().join(' ')||'—');drawGallows(state.lives)}
-    function pickWord(){const pool=state.pools[state.tier];if(!pool||pool.length===0) state.pools[state.tier]=shuffle([...(hostCfg.words[state.tier]||[])]);const w=(state.pools[state.tier].pop())||'placeholder';return w.toLowerCase()}
-    function setWord(w){state.word=w;state.revealed=w.split('').map(ch=>(/^[a-z]$/i.test(ch)?'_':ch));state.used=new Set();state.lives=Number(hostCfg.lives)||6;state.misses=0;state.hits=0;renderWord();updateHUD();if(statusMsg) statusMsg.textContent='Pick a letter…';buildKeyboard()}
-    function renderWord(){if(wordDisplay) wordDisplay.textContent=state.revealed.join(' ')}
-    function buildKeyboard(){if(!keyboardEl) return;keyboardEl.innerHTML='';ALPHABET.forEach(letter=>{const btn=document.createElement('button');btn.className='kbd';btn.type='button';btn.textContent=letter;btn.disabled=state.used.has(letter);btn.addEventListener('click',()=>guess(letter));keyboardEl.appendChild(btn)});document.removeEventListener('keydown',keyHandler);document.addEventListener('keydown',keyHandler)}
-    function keyHandler(e){if(!/^[a-z]$/i.test(e.key)) return;const letter=e.key.toUpperCase();if(!keyboardEl) return;const btn=Array.from(keyboardEl.children).find(b=>b.textContent===letter);if(btn&&!btn.disabled) btn.click()}
-    function endRound(solved){const base=state.tier==='E'?hostCfg.scoreBase.E:(state.tier==='M'?hostCfg.scoreBase.M:hostCfg.scoreBase.H);let gained=0;if(solved){gained=(Number(base)||0)+(Number(state.lives)||0);state.score+=gained;if(statusMsg) statusMsg.textContent=`✔ Correct! +${gained} points`}else{if(statusMsg) statusMsg.textContent=`✖ The word was "${state.word}"`}state.breakdown.push(`${state.round}. [${state.tier}] ${state.word} — ${solved?('Solved, +'+gained):'Failed'}`);if(keyboardEl) Array.from(keyboardEl.children).forEach(b=>b.disabled=true);document.removeEventListener('keydown',keyHandler);setTimeout(()=>{state.round++;if(state.round>state.totalRounds) return finishGame();nextTierAndIndex();const next=pickWord();setWord(next)},900)}
-    function guess(letter){state.used.add(letter);if(keyboardEl){const btn=Array.from(keyboardEl.children).find(b=>b.textContent===letter);if(btn) btn.disabled=true}const indices=[];for(let i=0;i<state.word.length;i++){if(state.word[i].toUpperCase()===letter) indices.push(i)}if(indices.length){indices.forEach(i=>state.revealed[i]=state.word[i]);state.hits+=1;renderWord();updateHUD();if(state.revealed.join('')===state.word) endRound(true)}else{state.misses+=1;state.lives-=1;updateHUD();if(state.lives<=0) endRound(false)}}
-    function startGame(){state.round=1;nextTierAndIndex();initPools();const w=pickWord();setWord(w);if(screenLogin) screenLogin.classList.add('hidden');if(screenGame) screenGame.classList.remove('hidden')}
-    function finishGame(){if(screenGame) screenGame.classList.add('hidden');if(screenFinale) screenFinale.classList.remove('hidden');if(finalLine) finalLine.textContent=`${state.ign} — ${state.pid} scored ${state.score} points.`;if(breakdown){breakdown.innerHTML='';state.breakdown.forEach(line=>{const li=document.createElement('li');li.textContent=line;breakdown.appendChild(li)})}const ranks=getRanking();ranks.push({ign:state.ign,pid:state.pid,score:state.score,date:new Date().toLocaleString()});ranks.sort((a,b)=>b.score-a.score);saveRanking(ranks.slice(0,100));renderRanking()}
-    function renderRanking(){const ranks=getRanking();if(!rankBody) return;rankBody.innerHTML='';if(leaderboardLoginTable) leaderboardLoginTable.innerHTML='';ranks.forEach((r,idx)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${idx+1}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${r.date}</td>`;rankBody.appendChild(tr);if(leaderboardLoginTable) leaderboardLoginTable.innerHTML+=`<tr><td>${idx+1}</td><td>${r.ign}</td><td>${r.pid}</td><td>${r.score}</td><td>${r.date}</td></tr>`})}
-    if(btnStart){btnStart.addEventListener('click',()=>{const ignV=(ign&&ign.value||'').trim();const pidV=(pid&&pid.value||'').trim();if(!ignV||!pidV){alert('IGN & Player ID are required.');return}state.ign=ignV;state.pid=pidV;startGame();updateHUD()})}
-    if(toggleLeaderboardBtn) toggleLeaderboardBtn.addEventListener('click',()=>{const table=document.getElementById('leaderboardLoginTable');if(table) table.classList.toggle('hidden');renderRanking()});
-    if(btnCheckPassword) btnCheckPassword.addEventListener('click',checkPassword);
-    if(btnApplyHost) btnApplyHost.addEventListener('click',()=>{const pass=(hostPass&&hostPass.value||'').trim();if(!hostControls.classList.contains('hidden')||pass===hostCfg.passcode){const clean=s=> (s||'').split('\n').map(w=>w.trim().toLowerCase()).filter(Boolean);hostCfg.words={E:Array.from(new Set(clean(wordsEarea.value||''))),M:Array.from(new Set(clean(wordsMarea.value||''))),H:Array.from(new Set(clean(wordsHarea.value||'')))};hostCfg.lives=Math.max(3,Math.min(10,Number(livesInput.value||6)));hostCfg.scoreBase={E:Number(scoreEInput.value||10),M:Number(scoreMInput.value||20),H:Number(scoreHInput.value||30)};saveHostConfig(hostCfg);alert('Host settings applied and saved locally.');lockHostControls()}else{alert('You must unlock host settings with the correct passcode before applying.')}});
-    if(btnClearLeaderboard) btnClearLeaderboard.addEventListener('click',()=>{if(confirm('Are you sure you want to clear all scores? This action cannot be undone.')){localStorage.removeItem(STORAGE_KEYS.rank);renderRanking();alert('Leaderboard cleared!')}});
+    const state = { 
+      ign: '', pid: '', totalRounds: 30, tier: 'E', tierIndex: 0, 
+      round: 1, word: '', revealed: [], used: new Set(), lives: hostCfg.lives, 
+      misses: 0, hits: 0, score: 0, breakdown: [], pools: { E: [], M: [], H: [] } 
+    };
+
+    // Game Functions
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function initPools() {
+      state.pools.E = shuffle([...hostCfg.words.E]);
+      state.pools.M = shuffle([...hostCfg.words.M]);
+      state.pools.H = shuffle([...hostCfg.words.H]);
+    }
+
+    function nextTierAndIndex() {
+      if (state.round <= 10) {
+        state.tier = 'E';
+        state.tierIndex = state.round - 1;
+      } else if (state.round <= 20) {
+        state.tier = 'M';
+        state.tierIndex = state.round - 11;
+      } else {
+        state.tier = 'H';
+        state.tierIndex = state.round - 21;
+      }
+    }
+
+    function drawGallows(lives) {
+      const stages = [
+        `  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n      |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n  |   |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n /|   |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n /|\\  |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n /|\\  |\n /    |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n /|\\  |\n / \\ |\n      |\n=========`
+      ];
+      const idx = Math.max(0, Math.min(stages.length - 1, hostCfg.lives - lives));
+      elements.gallows.textContent = stages[idx];
+    }
+
+    function updateHUD() {
+      elements.playerTag.textContent = `${state.ign} — ${state.pid}`;
+      elements.roundInfo.textContent = `${state.round} / ${state.totalRounds}`;
+      const tierName = state.tier === 'E' ? 'Easy' : (state.tier === 'M' ? 'Medium' : 'Hard');
+      elements.phaseInfo.textContent = `${tierName} ${state.tierIndex + 1}/10`;
+      elements.difficultyPill.textContent = tierName;
+      elements.livesInfo.textContent = state.lives;
+      elements.scoreInfo.textContent = state.score;
+      elements.misses.textContent = state.misses;
+      elements.hits.textContent = state.hits;
+      elements.progBar.style.width = `${((state.round - 1) / state.totalRounds) * 100}%`;
+      elements.usedLetters.textContent = 'Used: ' + (Array.from(state.used).sort().join(' ') || '—');
+      drawGallows(state.lives);
+    }
+
+    function pickWord() {
+      const pool = state.pools[state.tier];
+      if (!pool || pool.length === 0) {
+        state.pools[state.tier] = shuffle([...hostCfg.words[state.tier]]);
+      }
+      return (state.pools[state.tier].pop() || 'word').toLowerCase();
+    }
+
+    function setWord(w) {
+      state.word = w;
+      state.revealed = w.split('').map(ch => /^[a-z]$/i.test(ch) ? '_' : ch);
+      state.used = new Set();
+      state.lives = hostCfg.lives;
+      state.misses = 0;
+      state.hits = 0;
+      elements.wordDisplay.textContent = state.revealed.join(' ');
+      elements.statusMsg.textContent = 'Pick a letter…';
+      updateHUD();
+      buildKeyboard();
+    }
+
+    function buildKeyboard() {
+      elements.keyboardEl.innerHTML = '';
+      ALPHABET.forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = 'kbd';
+        btn.textContent = letter;
+        btn.disabled = state.used.has(letter);
+        btn.onclick = () => guess(letter);
+        elements.keyboardEl.appendChild(btn);
+      });
+    }
+
+    function guess(letter) {
+      state.used.add(letter);
+      const btn = Array.from(elements.keyboardEl.children).find(b => b.textContent === letter);
+      if (btn) btn.disabled = true;
+      
+      const indices = [];
+      for (let i = 0; i < state.word.length; i++) {
+        if (state.word[i].toUpperCase() === letter) indices.push(i);
+      }
+      
+      if (indices.length) {
+        indices.forEach(i => state.revealed[i] = state.word[i]);
+        state.hits += 1;
+        elements.wordDisplay.textContent = state.revealed.join(' ');
+        updateHUD();
+        if (state.revealed.join('') === state.word) endRound(true);
+      } else {
+        state.misses += 1;
+        state.lives -= 1;
+        updateHUD();
+        if (state.lives <= 0) endRound(false);
+      }
+    }
+
+    function endRound(solved) {
+      const base = hostCfg.scoreBase[state.tier];
+      let gained = 0;
+      if (solved) {
+        gained = base + state.lives;
+        state.score += gained;
+        elements.statusMsg.textContent = `✔ Correct! +${gained} points`;
+      } else {
+        elements.statusMsg.textContent = `✖ The word was "${state.word}"`;
+      }
+      state.breakdown.push(`${state.round}. [${state.tier}] ${state.word} — ${solved ? `Solved, +${gained}` : 'Failed'}`);
+      
+      setTimeout(() => {
+        state.round++;
+        if (state.round > state.totalRounds) return finishGame();
+        nextTierAndIndex();
+        setWord(pickWord());
+      }, 1500);
+    }
+
+    function startGame() {
+      state.round = 1;
+      state.score = 0;
+      state.breakdown = [];
+      nextTierAndIndex();
+      initPools();
+      setWord(pickWord());
+      elements.screenLogin.classList.add('hidden');
+      elements.screenGame.classList.remove('hidden');
+    }
+
+    function finishGame() {
+      elements.screenGame.classList.add('hidden');
+      elements.screenFinale.classList.remove('hidden');
+      elements.finalLine.textContent = `${state.ign} — ${state.pid} scored ${state.score} points.`;
+      
+      elements.breakdown.innerHTML = '';
+      state.breakdown.forEach(line => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        elements.breakdown.appendChild(li);
+      });
+      
+      const ranks = getRanking();
+      ranks.push({ ign: state.ign, pid: state.pid, score: state.score, date: new Date().toLocaleString() });
+      ranks.sort((a, b) => b.score - a.score);
+      saveRanking(ranks.slice(0, 100));
+      renderRanking();
+    }
+
+    function renderRanking() {
+      const ranks = getRanking();
+      elements.rankBody.innerHTML = '';
+      if (elements.leaderboardLoginTable) elements.leaderboardLoginTable.innerHTML = '';
+      
+      ranks.forEach((r, idx) => {
+        const tr = `<tr><td>${idx + 1}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${r.date}</td></tr>`;
+        elements.rankBody.innerHTML += tr;
+        if (elements.leaderboardLoginTable) elements.leaderboardLoginTable.innerHTML += tr;
+      });
+    }
+
+    // Event Listeners
+    elements.btnStart.onclick = () => {
+      const ignV = elements.ign.value.trim();
+      const pidV = elements.pid.value.trim();
+      if (!ignV || !pidV) {
+        alert('IGN & Player ID are required.');
+        return;
+      }
+      state.ign = ignV;
+      state.pid = pidV;
+      startGame();
+    };
+
+    elements.btnCheckPassword.onclick = () => {
+      if (elements.hostPass.value === hostCfg.passcode) {
+        elements.hostControls.classList.remove('hidden');
+        elements.hostPass.value = '';
+      } else {
+        alert('Incorrect passcode');
+      }
+    };
+
+    elements.btnLockHost.onclick = () => {
+      elements.hostControls.classList.add('hidden');
+      elements.hostPass.value = '';
+    };
+
+    elements.btnApplyHost.onclick = () => {
+      const clean = s => s.split('\n').map(w => w.trim().toLowerCase()).filter(Boolean);
+      hostCfg.words = { 
+        E: Array.from(new Set(clean(elements.wordsE.value))), 
+        M: Array.from(new Set(clean(elements.wordsM.value))), 
+        H: Array.from(new Set(clean(elements.wordsH.value))) 
+      };
+      hostCfg.lives = Math.max(3, Math.min(10, Number(elements.livesPerRound.value)));
+      hostCfg.scoreBase = { 
+        E: Number(elements.scoreE.value), 
+        M: Number(elements.scoreM.value), 
+        H: Number(elements.scoreH.value) 
+      };
+      saveHostConfig(hostCfg);
+      alert('Host settings saved!');
+      elements.hostControls.classList.add('hidden');
+    };
+
+    elements.btnClearLeaderboard.onclick = () => {
+      if (confirm('Clear all scores?')) {
+        localStorage.removeItem(STORAGE_KEYS.rank);
+        renderRanking();
+        alert('Leaderboard cleared!');
+      }
+    };
+
+    elements.toggleLeaderboardBtn.onclick = () => {
+      document.getElementById('leaderboardLoginTable').classList.toggle('hidden');
+      renderRanking();
+    };
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (!/^[a-z]$/i.test(e.key) || elements.screenGame.classList.contains('hidden')) return;
+      const letter = e.key.toUpperCase();
+      const btn = Array.from(elements.keyboardEl.children).find(b => b.textContent === letter);
+      if (btn && !btn.disabled) btn.click();
+    });
+
+    // Initialize
     renderRanking();
-    window._hangman={state,hostCfg,startGame,finishGame};
   </script>
 </body>
 </html>
