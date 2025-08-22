@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hangman: Harvest Town Edition — Fixed</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #111827;
+      --muted: #1f2937;
+      --text: #e5e7eb;
+      --accent: #60a5fa;
+      --good: #34d399;
+      --bad: #f87171;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color: var(--text); }
+    
+    /* Banner Styles */
+    .banner {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #2563eb 0%, #059669 25%, #d97706 50%, #dc2626 75%, #7c3aed 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 8s ease infinite;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none"><path d="M0 100c50-20 100-40 150-20s100 40 150 20s100-40 150-20v100H0z" fill="rgba(255,255,255,0.1)"/><path d="M0 120c50-15 100-30 150-15s100 30 150 15s100-30 150-15v80H0z" fill="rgba(255,255,255,0.05)"/></svg>') no-repeat center;
+      background-size: cover;
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .banner-content {
+      text-align: center;
+      z-index: 2;
+      position: relative;
+    }
+    
+    .banner-title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.3);
+      margin: 0 0 8px 0;
+      letter-spacing: -0.02em;
+    }
+    
+    .banner-subtitle {
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.9);
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+      margin: 0;
+    }
+    
+    .banner-icons {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 2rem;
+      animation: bounce 3s infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+    
+    @media (max-width: 768px) {
+      .banner {
+        height: 150px;
+      }
+      .banner-title {
+        font-size: 2.5rem;
+      }
+      .banner-subtitle {
+        font-size: 1rem;
+      }
+      .banner-icons {
+        font-size: 1.5rem;
+        right: 20px;
+        top: 15px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .banner {
+        height: 120px;
+      }
+      .banner-title {
+        font-size: 2rem;
+      }
+      .banner-subtitle {
+        font-size: 0.9rem;
+      }
+    }
+    .card { background: var(--surface); border: 1px solid #1f2937; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+    h1,h2,h3{ margin:0 0 12px }
+    .grid { display:grid; gap:16px }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .btn{ appearance:none; background:var(--muted); color:var(--text); border:1px solid #374151; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600 }
+    .btn:hover{ background:#374151 }
+    .btn-primary{ background:var(--accent); color:#071126 }
+    .btn-good{ background:var(--good); color:#052e1e }
+    .input, textarea { width:100%; background:#0b1220; color:var(--text); border:1px solid #334155; border-radius:12px; padding:10px 12px }
+    .kbd{ display:inline-flex; align-items:center; justify-content:center; min-width:32px; padding:6px 8px; border-radius:10px; border:1px solid #334155; background:#0b1220; font-weight:700; margin:4px; cursor:pointer; color:#ffffff }
+    .kbd:hover:not([disabled]){ color:var(--accent); transform:translateY(-2px) }
+    .kbd[disabled]{ opacity:.45; cursor:not-allowed; color:#ffffff }
+    .row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap }
+    .pill{ padding:6px 10px; border-radius:999px; border:1px solid #374151; background:#0b1220; font-weight:700 }
+    .hidden{ display:none !important }
+    .word{ letter-spacing:.3em; font-size:36px; font-weight:800; text-align:center; padding:12px 16px; border-radius:12px; background:#0b1220; border:1px dashed #334155 }
+    .progress{ width:100%; background:#0b1220; border:1px solid #334155; border-radius:12px; overflow:hidden; height:12px }
+    .bar{ height:100%; background:var(--accent); width:0%; transition:width .3s }
+    table{ width:100%; border-collapse:collapse }
+    th,td{ border-bottom:1px solid #243041; padding:10px; text-align:left }
+    .hangman{ min-height:140px; display:flex; align-items:center; justify-content:center }
+    .gallows{ font-family: "Courier New", monospace; white-space:pre; line-height:1.05 }
+    .footnote{ font-size:12px; opacity:.85 }
+    .tag{ font-size:12px; opacity:.9 }
+    .center{ text-align:center }
+    @media (max-width:700px){.grid-2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <!-- Animated Banner -->
+  <div class="banner">
+    <div class="banner-content">
+      <h1 class="banner-title">🌾 HARVEST TOWN 🌾</h1>
+      <p class="banner-subtitle">Welcome to the Harvest Town Hangman Challenge!</p>
+    </div>
+    <div class="banner-icons">🚜🌽🐄</div>
+  </div>
+  <div class="container">
+    <!-- Login Screen -->
+    <div class="card" id="screen-login">
+      <h1>🔐 Hangman: Harvest Town Edition— Player Login</h1>
+      <p>Enter your IGN and Player ID to play. Words are curated by the Host.</p>
+      <h3>HOW TO PLAY: <h3>
+        <h4><li>Guess one letter at a time. Correct guesses reveal letters.
+        <li>Wrong guesses draw the hangman. You have limited lives.
+        <li>Reveal the answer before you run out of lives. Goodluck!<h4>
+      <div class="grid grid-2">
+        <div>
+          <label for="ign">IGN</label>
+          <input id="ign" class="input" placeholder="e.g. GM HarYu" maxlength="50" />
+        </div>
+        <div>
+          <label for="pid">Player ID</label>
+          <input id="pid" class="input" placeholder="e.g. 13399604" maxlength="8" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:space-between;">
+        <div class="footnote">After game ends (30 rounds), your score is added to the local ranking.</div>
+        <button id="btnStart" class="btn btn-primary">Start Game</button>
+      </div>
+      <div class="center" style="margin-top:12px">
+        <button id="toggleLeaderboardBtn" class="btn">View Leaderboard</button>
+      </div>
+      <table id="leaderboardLoginTable" class="hidden" style="margin:12px auto;width:90%;max-width:700px">
+        <thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <hr style="margin:18px 0;border-color:#1f2937" />
+      <details>
+        <summary>🛠️ Settings(host only)</summary>
+        <div style="margin-top:12px">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <label style="min-width:130px">Enter Host Passcode</label>
+            <input id="hostPass" class="input" type="password" placeholder="passcode" style="max-width:280px" />
+            <button id="btnCheckPassword" class="btn">Unlock Host Settings</button>
+            <div id="hiddenContent" style="display: none;">
+            <div class="footnote" style="margin-left:6px">Passcode: <code id="passnote">HTGMHARYU1324</code></div>
+          </div>
+          <div id="hostControls" class="hidden" style="margin-top:12px">
+            <div class="grid grid-3">
+              <div>
+                <label>Lives per round</label>
+                <input id="livesPerRound" type="number" class="input" min="3" max="10" value="6" />
+              </div>
+              <div>
+                <label>Scoring (E / M / H base)</label>
+                <div class="row">
+                  <input id="scoreE" type="number" class="input" value="10" style="max-width:90px" />
+                  <input id="scoreM" type="number" class="input" value="20" style="max-width:90px" />
+                  <input id="scoreH" type="number" class="input" value="30" style="max-width:90px" />
+                </div>
+                <div class="footnote">Solved round awards base points + remaining lives as bonus.</div>
+              </div>
+              <div></div>
+            </div>
+            <div class="grid grid-3" style="margin-top:12px">
+              <div>
+                <label>Easy Words (one per line)</label>
+                <textarea id="wordsE" rows="8" class="input"></textarea>
+              </div>
+              <div>
+                <label>Medium Words (one per line)</label>
+                <textarea id="wordsM" rows="8" class="input"></textarea>
+              </div>
+              <div>
+                <label>Hard Words (one per line)</label>
+                <textarea id="wordsH" rows="8" class="input"></textarea>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+              <button id="btnApplyHost" class="btn btn-good">Apply Host Settings</button>
+              <button id="btnLockHost" class="btn">Lock Host Settings</button>
+              <button id="btnClearLeaderboard" class="btn" style="margin-left:6px">Clear Leaderboard</button>
+            </div>
+            <div class="footnote" style="margin-top:10px">Players cannot access or change these without the passcode. All words are stored locally in this browser.</div>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="card hidden">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <h2>🎯 Hangman: Harvest Town</h2>
+          <div class="tag" id="playerTag">IGN — Player ID</div>
+        </div>
+        <div class="scorebox" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+          <div><div class="tag">Round</div><div id="roundInfo">1 / 30</div></div>
+          <div><div class="tag">Phase</div><div id="phaseInfo">Easy 1/10</div></div>
+          <div><div class="tag">Lives</div><div id="livesInfo">6</div></div>
+          <div><div class="tag">Score</div><div id="scoreInfo">0</div></div>
+        </div>
+      </div>
+      <div class="progress" style="margin:12px 0 8px"><div class="bar" id="progBar"></div></div>
+      <div class="row" style="justify-content:space-between"><div class="pill" id="difficultyPill">Easy</div><div class="pill">Solve bonus = remaining lives</div></div>
+      <div class="card" style="margin-top:16px;background:#1f2937;color:#ffffff">
+        <div class="hangman"><pre class="gallows" id="gallows">  +---+
+  |   |
+      |
+      |
+      |
+      |
+=========</pre></div>
+        <div class="word" id="wordDisplay">_ _ _ _</div>
+        <div class="center" style="margin-top:10px" id="hintArea"></div>
+        <div class="center footnote" id="statusMsg" style="min-height:22px">Pick a letter…</div>
+        <div id="keyboard" class="center" style="margin-top:8px"></div>
+      </div>
+      <div class="row" style="justify-content:space-between;margin-top:8px">
+        <div class="pill" id="usedLetters">Used: </div>
+        <div class="row"><span class="pill">Incorrect: <b id="misses">0</b></span><span class="pill">Correct: <b id="hits">0</b></span></div>
+      </div>
+    </div>
+
+    <!-- Final Screen -->
+    <div id="screen-finale" class="card hidden">
+      <h2>🏁 Game Over — Final Score</h2>
+      <p id="finalLine"></p>
+      <div class="grid grid-2">
+        <div>
+          <div class="card" style="background:#0b1220"><h3>Your Breakdown</h3><ul id="breakdown"></ul></div>
+        </div>
+        <div>
+          <div class="card" style="background:#0b1220"><h3>🏆 Local Ranking</h3>
+            <table><thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead><tbody id="rankBody"></tbody></table>
+            <div class="footnote" style="color:var(--warn)">There is no restart/play-again button. Reload the page for a new player session.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Storage and Configuration
+    const STORAGE_KEYS = { host: 'hangman_host_config_v1', rank: 'hangman_rankings_v1' };
+    
+    const DEFAULT_WORDS = {      
+      easy: `apple\nmanor\nhoe\ncow\nsheep\nchicken\npeacock\npig\nmilk\negg\nbarn\nonion\ngarlic\nwheat\neel\npeachvblueberry\nrose\ntulips\nbarl\nabu\nstone\nfoxy\nfay\nmay\npotato\nbean\ntomato\nmango\npumpkin\nbanana\ngrape\ntofu`,
+      medium: `sunflower\nnapa cabbage\nmallow root\nvegetable juice\norange juice\nshiitake sauce\ncurry sauce\ncopper ingot\nrefined quartz\nmiddle bait\npoultry feed\napple milkshake\nred piranha\nstone fish\nsturgeon\ngarra lamta\nstarfish\nskipjack tuna\ncherry pie\nsweet carp\nseaweed dish\nfried egg\ntangerine pudding\nlocket\nbrooch\nice cream\nfishing rod\nshovel\ndark essence`,
+      hard: `ella cole\ntom cole\nandy reed\nbonfire party\nbeach party\nhair-caring ginseng powder\ncordyceps powdervginseng powder\ngastrodia powder\nbanana crisp\nchocolate bar\near-shaped cracker\nspicy fish head\nsauteed wax gourd\nyolk-baked corn\ngrass carp sashimi\nspider necklace\nshell crown\nmilk pudding\nblueberry pie\npumpkin cake\nhoneysuckle tea\ncooling tea\nqueen scale powder\nscale powder\nmary morris\nsteve lopez`
+    };
+    
+    const DEFAULT_CONFIG = { 
+      passcode: 'HTGMHARYU1324', 
+      lives: 6, 
+      scoreBase: { E: 1, M: 3, H: 5 }, 
+      words: { 
+        E: DEFAULT_WORDS.easy.split('\n'), 
+        M: DEFAULT_WORDS.medium.split('\n'), 
+        H: DEFAULT_WORDS.hard.split('\n') 
+      } 
+    };
+
+    // Storage Functions
+    function loadHostConfig() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.host);
+        if (!raw) return structuredClone(DEFAULT_CONFIG);
+        return JSON.parse(raw);
+      } catch (e) {
+        return structuredClone(DEFAULT_CONFIG);
+      }
+    }
+
+    function saveHostConfig(cfg) { 
+      localStorage.setItem(STORAGE_KEYS.host, JSON.stringify(cfg)); 
+    }
+
+    function getRanking() { 
+      try { 
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.rank) || '[]'); 
+      } catch (e) { 
+        return []; 
+      } 
+    }
+
+    function saveRanking(list) { 
+      localStorage.setItem(STORAGE_KEYS.rank, JSON.stringify(list)); 
+    }
+
+    // Initialize
+    let hostCfg = loadHostConfig();
+    
+    // DOM Elements
+    const elements = {
+      ign: document.getElementById('ign'),
+      pid: document.getElementById('pid'),
+      btnStart: document.getElementById('btnStart'),
+      hostPass: document.getElementById('hostPass'),
+      btnCheckPassword: document.getElementById('btnCheckPassword'),
+      hostControls: document.getElementById('hostControls'),
+      passnote: document.getElementById('passnote'),
+      livesPerRound: document.getElementById('livesPerRound'),
+      scoreE: document.getElementById('scoreE'),
+      scoreM: document.getElementById('scoreM'),
+      scoreH: document.getElementById('scoreH'),
+      wordsE: document.getElementById('wordsE'),
+      wordsM: document.getElementById('wordsM'),
+      wordsH: document.getElementById('wordsH'),
+      btnApplyHost: document.getElementById('btnApplyHost'),
+      btnLockHost: document.getElementById('btnLockHost'),
+      btnClearLeaderboard: document.getElementById('btnClearLeaderboard'),
+      screenLogin: document.getElementById('screen-login'),
+      screenGame: document.getElementById('screen-game'),
+      screenFinale: document.getElementById('screen-finale'),
+      playerTag: document.getElementById('playerTag'),
+      roundInfo: document.getElementById('roundInfo'),
+      phaseInfo: document.getElementById('phaseInfo'),
+      difficultyPill: document.getElementById('difficultyPill'),
+      livesInfo: document.getElementById('livesInfo'),
+      scoreInfo: document.getElementById('scoreInfo'),
+      progBar: document.getElementById('progBar'),
+      gallows: document.getElementById('gallows'),
+      wordDisplay: document.getElementById('wordDisplay'),
+      statusMsg: document.getElementById('statusMsg'),
+      keyboardEl: document.getElementById('keyboard'),
+      usedLetters: document.getElementById('usedLetters'),
+      misses: document.getElementById('misses'),
+      hits: document.getElementById('hits'),
+      rankBody: document.getElementById('rankBody'),
+      finalLine: document.getElementById('finalLine'),
+      breakdown: document.getElementById('breakdown'),
+      leaderboardLoginTable: document.querySelector('#leaderboardLoginTable tbody'),
+      toggleLeaderboardBtn: document.getElementById('toggleLeaderboardBtn')
+    };
+
+    // Initialize display
+    elements.passnote.textContent = hostCfg.passcode;
+    elements.wordsE.value = hostCfg.words.E.join('\n');
+    elements.wordsM.value = hostCfg.words.M.join('\n');
+    elements.wordsH.value = hostCfg.words.H.join('\n');
+    elements.livesPerRound.value = hostCfg.lives;
+    elements.scoreE.value = hostCfg.scoreBase.E;
+    elements.scoreM.value = hostCfg.scoreBase.M;
+    elements.scoreH.value = hostCfg.scoreBase.H;
+
+    // Game State
+    const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const state = { 
+      ign: '', pid: '', totalRounds: 30, tier: 'E', tierIndex: 0, 
+      round: 1, word: '', revealed: [], used: new Set(), lives: hostCfg.lives, 
+      misses: 0, hits: 0, score: 0, breakdown: [], pools: { E: [], M: [], H: [] } 
+    };
+
+    // Game Functions
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function initPools() {
+      state.pools.E = shuffle([...hostCfg.words.E]);
+      state.pools.M = shuffle([...hostCfg.words.M]);
+      state.pools.H = shuffle([...hostCfg.words.H]);
+    }
+
+    function nextTierAndIndex() {
+      if (state.round <= 10) {
+        state.tier = 'E';
+        state.tierIndex = state.round - 1;
+      } else if (state.round <= 20) {
+        state.tier = 'M';
+        state.tierIndex = state.round - 11;
+      } else {
+        state.tier = 'H';
+        state.tierIndex = state.round - 21;
+      }
+    }
+
+    function drawGallows(lives) {
+      const stages = [
+        `  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n      |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n  |   |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n /|   |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n /|\\  |\n      |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n /|\\  |\n /    |\n      |\n=========`,
+        `  +---+\n  |   |\n  O   |\n /|\\  |\n / \\ |\n      |\n=========`
+      ];
+      const idx = Math.max(0, Math.min(stages.length - 1, hostCfg.lives - lives));
+      elements.gallows.textContent = stages[idx];
+    }
+
+    function updateHUD() {
+      elements.playerTag.textContent = `${state.ign} — ${state.pid}`;
+      elements.roundInfo.textContent = `${state.round} / ${state.totalRounds}`;
+      const tierName = state.tier === 'E' ? 'Easy' : (state.tier === 'M' ? 'Medium' : 'Hard');
+      elements.phaseInfo.textContent = `${tierName} ${state.tierIndex + 1}/10`;
+      elements.difficultyPill.textContent = tierName;
+      elements.livesInfo.textContent = state.lives;
+      elements.scoreInfo.textContent = state.score;
+      elements.misses.textContent = state.misses;
+      elements.hits.textContent = state.hits;
+      elements.progBar.style.width = `${((state.round - 1) / state.totalRounds) * 100}%`;
+      elements.usedLetters.textContent = 'Used: ' + (Array.from(state.used).sort().join(' ') || '—');
+      drawGallows(state.lives);
+    }
+
+    function pickWord() {
+      const pool = state.pools[state.tier];
+      if (!pool || pool.length === 0) {
+        state.pools[state.tier] = shuffle([...hostCfg.words[state.tier]]);
+      }
+      return (state.pools[state.tier].pop() || 'word').toLowerCase();
+    }
+
+    function setWord(w) {
+      state.word = w;
+      state.revealed = w.split('').map(ch => /^[a-z]$/i.test(ch) ? '_' : ch);
+      state.used = new Set();
+      state.lives = hostCfg.lives;
+      state.misses = 0;
+      state.hits = 0;
+      elements.wordDisplay.textContent = state.revealed.join(' ');
+      elements.statusMsg.textContent = 'Pick a letter…';
+      updateHUD();
+      buildKeyboard();
+    }
+
+    function buildKeyboard() {
+      elements.keyboardEl.innerHTML = '';
+      ALPHABET.forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = 'kbd';
+        btn.textContent = letter;
+        btn.disabled = state.used.has(letter);
+        btn.onclick = () => guess(letter);
+        elements.keyboardEl.appendChild(btn);
+      });
+    }
+
+    function guess(letter) {
+      state.used.add(letter);
+      const btn = Array.from(elements.keyboardEl.children).find(b => b.textContent === letter);
+      if (btn) btn.disabled = true;
+      
+      const indices = [];
+      for (let i = 0; i < state.word.length; i++) {
+        if (state.word[i].toUpperCase() === letter) indices.push(i);
+      }
+      
+      if (indices.length) {
+        indices.forEach(i => state.revealed[i] = state.word[i]);
+        state.hits += 1;
+        elements.wordDisplay.textContent = state.revealed.join(' ');
+        updateHUD();
+        if (state.revealed.join('') === state.word) endRound(true);
+      } else {
+        state.misses += 1;
+        state.lives -= 1;
+        updateHUD();
+        if (state.lives <= 0) endRound(false);
+      }
+    }
+
+    function endRound(solved) {
+      const base = hostCfg.scoreBase[state.tier];
+      let gained = 0;
+      if (solved) {
+        gained = base + state.lives;
+        state.score += gained;
+        elements.statusMsg.textContent = `✔ Correct! +${gained} points`;
+      } else {
+        elements.statusMsg.textContent = `✖ The word was "${state.word}"`;
+      }
+      state.breakdown.push(`${state.round}. [${state.tier}] ${state.word} — ${solved ? `Solved, +${gained}` : 'Failed'}`);
+      
+      setTimeout(() => {
+        state.round++;
+        if (state.round > state.totalRounds) return finishGame();
+        nextTierAndIndex();
+        setWord(pickWord());
+      }, 1500);
+    }
+
+    function startGame() {
+      state.round = 1;
+      state.score = 0;
+      state.breakdown = [];
+      nextTierAndIndex();
+      initPools();
+      setWord(pickWord());
+      elements.screenLogin.classList.add('hidden');
+      elements.screenGame.classList.remove('hidden');
+    }
+
+    function finishGame() {
+      elements.screenGame.classList.add('hidden');
+      elements.screenFinale.classList.remove('hidden');
+      elements.finalLine.textContent = `${state.ign} — ${state.pid} scored ${state.score} points.`;
+      
+      elements.breakdown.innerHTML = '';
+      state.breakdown.forEach(line => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        elements.breakdown.appendChild(li);
+      });
+      
+      const ranks = getRanking();
+      ranks.push({ ign: state.ign, pid: state.pid, score: state.score, date: new Date().toLocaleString() });
+      ranks.sort((a, b) => b.score - a.score);
+      saveRanking(ranks.slice(0, 100));
+      renderRanking();
+    }
+
+    function renderRanking() {
+      const ranks = getRanking();
+      elements.rankBody.innerHTML = '';
+      if (elements.leaderboardLoginTable) elements.leaderboardLoginTable.innerHTML = '';
+      
+      ranks.forEach((r, idx) => {
+        const tr = `<tr><td>${idx + 1}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${r.date}</td></tr>`;
+        elements.rankBody.innerHTML += tr;
+        if (elements.leaderboardLoginTable) elements.leaderboardLoginTable.innerHTML += tr;
+      });
+    }
+
+    // Event Listeners
+    elements.btnStart.onclick = () => {
+      const ignV = elements.ign.value.trim();
+      const pidV = elements.pid.value.trim();
+      if (!ignV || !pidV) {
+        alert('IGN & Player ID are required.');
+        return;
+      }
+      state.ign = ignV;
+      state.pid = pidV;
+      startGame();
+    };
+
+    elements.btnCheckPassword.onclick = () => {
+      if (elements.hostPass.value === hostCfg.passcode) {
+        elements.hostControls.classList.remove('hidden');
+        elements.hostPass.value = '';
+      } else {
+        alert('Incorrect passcode');
+      }
+    };
+
+    elements.btnLockHost.onclick = () => {
+      elements.hostControls.classList.add('hidden');
+      elements.hostPass.value = '';
+    };
+
+    elements.btnApplyHost.onclick = () => {
+      const clean = s => s.split('\n').map(w => w.trim().toLowerCase()).filter(Boolean);
+      hostCfg.words = { 
+        E: Array.from(new Set(clean(elements.wordsE.value))), 
+        M: Array.from(new Set(clean(elements.wordsM.value))), 
+        H: Array.from(new Set(clean(elements.wordsH.value))) 
+      };
+      hostCfg.lives = Math.max(3, Math.min(10, Number(elements.livesPerRound.value)));
+      hostCfg.scoreBase = { 
+        E: Number(elements.scoreE.value), 
+        M: Number(elements.scoreM.value), 
+        H: Number(elements.scoreH.value) 
+      };
+      saveHostConfig(hostCfg);
+      alert('Host settings saved!');
+      elements.hostControls.classList.add('hidden');
+    };
+
+    elements.btnClearLeaderboard.onclick = () => {
+      if (confirm('Clear all scores?')) {
+        localStorage.removeItem(STORAGE_KEYS.rank);
+        renderRanking();
+        alert('Leaderboard cleared!');
+      }
+    };
+
+    elements.toggleLeaderboardBtn.onclick = () => {
+      document.getElementById('leaderboardLoginTable').classList.toggle('hidden');
+      renderRanking();
+    };
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (!/^[a-z]$/i.test(e.key) || elements.screenGame.classList.contains('hidden')) return;
+      const letter = e.key.toUpperCase();
+      const btn = Array.from(elements.keyboardEl.children).find(b => b.textContent === letter);
+      if (btn && !btn.disabled) btn.click();
+    });
+
+    // Initialize
+    renderRanking();
+  </script>
+</body>
+</html>
