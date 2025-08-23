@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    }<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -138,6 +138,7 @@
     .btn-good{ background:var(--good); color:#052e1e }
     .btn-online{ background:linear-gradient(45deg, #059669, #2563eb); color:white; }
     .btn-online:hover{ background:linear-gradient(45deg, #047857, #1d4ed8); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .input, textarea { width:100%; background:#0b1220; color:var(--text); border:1px solid #334155; border-radius:12px; padding:10px 12px }
     .kbd{ display:inline-flex; align-items:center; justify-content:center; min-width:32px; padding:6px 8px; border-radius:10px; border:1px solid #334155; background:#0b1220; font-weight:700; margin:4px; cursor:pointer; color:#ffffff }
     .kbd:hover:not([disabled]){ color:var(--accent); transform:translateY(-2px) }
@@ -216,6 +217,15 @@
     .loading { opacity: 0.6; pointer-events: none; }
     .error-msg { color: var(--bad); font-size: 12px; margin-top: 4px; }
     .success-msg { color: var(--good); font-size: 12px; margin-top: 4px; }
+    .local-indicator { 
+      display: inline-block; 
+      width: 8px; 
+      height: 8px; 
+      background: var(--accent); 
+      border-radius: 50%; 
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
     .online-indicator { 
       display: inline-block; 
       width: 8px; 
@@ -323,7 +333,7 @@
         </div>
       </div>
       <div class="row" style="margin-top:12px;justify-content:space-between;">
-        <div class="footnote">After game ends (30 rounds), your score is added to both local and online rankings.</div>
+        <div class="footnote">After game ends (30 rounds), your score is saved to local rankings.</div>
         <button id="btnStart" class="btn btn-primary">Start Game</button>
       </div>
       <div class="center" style="margin-top:12px">
@@ -463,7 +473,7 @@
               <thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead>
               <tbody id="rankBodyOnline"></tbody>
             </table>
-            <div class="footnote" style="color:var(--warn)">There is no restart/play-again button.</div>
+            <div class="footnote" style="color:var(--warn);margin-top:8px">There is no restart/play-again button.</div>
           </div>
         </div>
       </div>
@@ -474,29 +484,15 @@
     // Storage and Configuration
     const STORAGE_KEYS = { host: 'hangman_host_config_v1', rank: 'hangman_rankings_v1' };
     
-    // Online Rankings Configuration - Using localStorage with sync simulation
+    // Online Rankings Configuration
     const ONLINE_CONFIG = {
-      storageKey: 'hangman_global_rankings_v2',
-      enabled: true,
-      syncInterval: 30000, // 30 seconds
-      maxRankings: 50
-    };
-    
-    const DEFAULT_WORDS = {      
-      easy: `apple\nmanor\nhoe\ncow\nsheep\nchicken\npeacock\npig\nmilk\negg\nbarn\nonion\ngarlic\nwheat\neel\npeach\nblueberry\nrose\ntulips\nbarl\nabu\nstone\nfoxy\nfay\nmay\npotato\nbean\ntomato\nmango\npumpkin\nbanana\ngrape\ntofu`,
-      medium: `sunflower\nnapa cabbage\nmallow root\nvegetable juice\norange juice\nshiitake sauce\ncurry sauce\ncopper ingot\nrefined quartz\nmiddle bait\npoultry feed\napple milkshake\nred piranha\nstone fish\nsturgeon\ngarra lamta\nstarfish\nskipjack tuna\ncherry pie\nsweet carp\nseaweed dish\nfried egg\ntangerine pudding\nlocket\nbrooch\nice cream\nfishing rod\nshovel\ndark essence`,
-      hard: `ella cole\ntom cole\nandy reed\nbonfire party\nbeach party\nhair-caring ginseng powder\ncordyceps powdervginseng powder\ngastrodia powder\nbanana crisp\nchocolate bar\near-shaped cracker\nspicy fish head\nsauteed wax gourd\nyolk-baked corn\ngrass carp sashimi\nspider necklace\nshell crown\nmilk pudding\nblueberry pie\npumpkin cake\nhoneysuckle tea\ncooling tea\nqueen scale powder\nscale powder\nmary morris\nsteve lopez`
-    };
-    
-    const DEFAULT_CONFIG = { 
-      passcode: 'HTGMHARYU1324', 
-      lives: 6, 
-      scoreBase: { E: 1, M: 3, H: 5 }, 
-      words: { 
-        E: DEFAULT_WORDS.easy.split('\n'), 
-        M: DEFAULT_WORDS.medium.split('\n'), 
-        H: DEFAULT_WORDS.hard.split('\n') 
-      } 
+      baseUrl: 'https://api.jsonbin.io/v3/b',
+      binId: '68a951dcd0ea881f40610e42',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': '$2a$10$cmCj/hUZg1fHAY/GXNdp9..O/eMyGp7WZt3/.v8ImuCgbd4SLZX5y'
+      },
+      maxRankings: 100
     };
 
     // Online Rankings System
@@ -535,7 +531,7 @@
 
       updateConnectionStatus(online) {
         const statusEl = document.getElementById('connection-status');
-        const indicator = statusEl.querySelector('.offline-indicator, .online-indicator');
+        const indicator = statusEl.querySelector('.local-indicator, .online-indicator, .offline-indicator');
         const text = statusEl.querySelector('span:last-child');
         
         if (online) {
@@ -558,13 +554,98 @@
           
           if (response.ok) {
             const data = await response.json();
-            this.rankings = data.record.rankings || [];
+            this.rankings = data.record?.rankings || [];
             this.lastFetch = Date.now();
             return this.rankings;
           }
         } catch (error) {
+          console.error('Failed to fetch rankings:', error);
+          return [];
+        }
+        
+        return [];
+      }
+
+      async submitScore(playerData) {
+        if (!this.isOnline) {
+          return { success: false, error: 'Offline mode' };
+        }
+
+        try {
+          // First fetch current rankings to avoid conflicts
+          await this.fetchRankings();
+          
+          // Add new score
+          const newEntry = {
+            ign: playerData.ign,
+            pid: playerData.pid,
+            score: playerData.score,
+            date: new Date().toISOString(),
+            timestamp: Date.now()
+          };
+          
+          this.rankings.push(newEntry);
+          
+          // Sort by score (descending) then by timestamp (ascending for ties)
+          this.rankings.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.timestamp - b.timestamp;
+          });
+          
+          // Keep top 100
+          this.rankings = this.rankings.slice(0, ONLINE_CONFIG.maxRankings);
+          
+          // Submit to JSONBin
+          const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}`, {
+            method: 'PUT',
+            headers: ONLINE_CONFIG.headers,
+            body: JSON.stringify({
+              rankings: this.rankings,
+              lastUpdated: new Date().toISOString()
+            })
+          });
+          
+          if (response.ok) {
+            const rank = this.rankings.findIndex(r => 
+              r.ign === newEntry.ign && 
+              r.pid === newEntry.pid && 
+              r.timestamp === newEntry.timestamp
+            ) + 1;
+            
+            return { success: true, rank };
+          } else {
+            throw new Error('Failed to submit score');
+          }
+        } catch (error) {
           console.error('Failed to submit score:', error);
           return { success: false, error: error.message };
+        }
+      }
+
+      async clearAllRankings() {
+        if (!this.isOnline) {
+          throw new Error('Cannot clear online rankings - offline mode');
+        }
+
+        try {
+          const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}`, {
+            method: 'PUT',
+            headers: ONLINE_CONFIG.headers,
+            body: JSON.stringify({
+              rankings: [],
+              lastUpdated: new Date().toISOString()
+            })
+          });
+          
+          if (response.ok) {
+            this.rankings = [];
+            return true;
+          } else {
+            throw new Error('Failed to clear rankings');
+          }
+        } catch (error) {
+          console.error('Failed to clear rankings:', error);
+          throw error;
         }
       }
 
@@ -575,6 +656,23 @@
 
     // Initialize online rankings
     const onlineRankings = new OnlineRankings();
+    
+    const DEFAULT_WORDS = {      
+      easy: `apple\nmanor\nhoe\ncow\nsheep\nchicken\npeacock\npig\nmilk\negg\nbarn\nonion\ngarlic\nwheat\neel\npeach\nblueberry\nrose\ntulips\nbarl\nabu\nstone\nfoxy\nfay\nmay\npotato\nbean\ntomato\nmango\npumpkin\nbanana\ngrape\ntofu`,
+      medium: `sunflower\nnapa cabbage\nmallow root\nvegetable juice\norange juice\nshiitake sauce\ncurry sauce\ncopper ingot\nrefined quartz\nmiddle bait\npoultry feed\napple milkshake\nred piranha\nstone fish\nsturgeon\ngarra lamta\nstarfish\nskipjack tuna\ncherry pie\nsweet carp\nseaweed dish\nfried egg\ntangerine pudding\nlocket\nbrooch\nice cream\nfishing rod\nshovel\ndark essence`,
+      hard: `ella cole\ntom cole\nandy reed\nbonfire party\nbeach party\nhair-caring ginseng powder\ncordyceps powder\nginseng powder\ngastrodia powder\nbanana crisp\nchocolate bar\near-shaped cracker\nspicy fish head\nsauteed wax gourd\nyolk-baked corn\ngrass carp sashimi\nspider necklace\nshell crown\nmilk pudding\nblueberry pie\npumpkin cake\nhoneysuckle tea\ncooling tea\nqueen scale powder\nscale powder\nmary morris\nsteve lopez`
+    };
+    
+    const DEFAULT_CONFIG = { 
+      passcode: 'HTGMHARYU1324', 
+      lives: 6, 
+      scoreBase: { E: 1, M: 3, H: 5 }, 
+      words: { 
+        E: DEFAULT_WORDS.easy.split('\n'), 
+        M: DEFAULT_WORDS.medium.split('\n'), 
+        H: DEFAULT_WORDS.hard.split('\n') 
+      } 
+    };
 
     // Storage Functions
     function loadHostConfig() {
@@ -625,6 +723,7 @@
       btnApplyHost: document.getElementById('btnApplyHost'),
       btnLockHost: document.getElementById('btnLockHost'),
       btnClearLeaderboard: document.getElementById('btnClearLeaderboard'),
+      btnClearOnlineLeaderboard: document.getElementById('btnClearOnlineLeaderboard'),
       screenLogin: document.getElementById('screen-login'),
       screenGame: document.getElementById('screen-game'),
       screenFinale: document.getElementById('screen-finale'),
