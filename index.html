@@ -474,15 +474,12 @@
     // Storage and Configuration
     const STORAGE_KEYS = { host: 'hangman_host_config_v1', rank: 'hangman_rankings_v1' };
     
-    // Online Rankings Configuration
+    // Online Rankings Configuration - Using localStorage with sync simulation
     const ONLINE_CONFIG = {
-      baseUrl: 'https://api.jsonbin.io/v3/b',
-      binId: '68a951dcd0ea881f40610e42', // You'll need to create your own JSONBin
-      apiKey: '$2a$10$cmCj/hUZg1fHAY/GXNdp9..O/eMyGp7WZt3/.v8ImuCgbd4SLZX5y', // Replace with your actual API key
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': '$2a$10$cmCj/hUZg1fHAY/GXNdp9..O/eMyGp7WZt3/.v8ImuCgbd4SLZX5y' // Replace with your actual API key
-      }
+      storageKey: 'hangman_global_rankings_v2',
+      enabled: true,
+      syncInterval: 30000, // 30 seconds
+      maxRankings: 50
     };
     
     const DEFAULT_WORDS = {      
@@ -1066,21 +1063,16 @@
         alert('Cannot clear online leaderboard – not connected.');
         return;
       }
-      if (!confirm('⚠️ This will permanently clear ALL online rankings for everyone. Continue?')) return;
+      if (!confirm('⚠️ This will clear all global rankings. Continue?')) return;
       
       try {
-        const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}`, {
-          method: 'PUT',
-          headers: ONLINE_CONFIG.headers,
-          body: JSON.stringify({ rankings: [], lastUpdated: new Date().toISOString() })
-        });
+        onlineRankings.clearAllRankings();
+        alert('✅ Global leaderboard cleared!');
         
-        if (response.ok) {
-          alert('✅ Online leaderboard cleared!');
-          onlineRankings.rankings = [];
-          renderOnlineRankings(elements.leaderboardOnlineTable, elements.onlineRankingStatus);
-        } else {
-          alert('⌫ Failed to clear online leaderboard');
+        // Refresh displays
+        renderOnlineRankings(elements.leaderboardOnlineTable, elements.onlineRankingStatus);
+        if (elements.rankBodyOnline) {
+          renderOnlineRankings(elements.rankBodyOnline);
         }
       } catch (err) {
         console.error(err);
@@ -1102,3 +1094,5 @@
   </script>
 </body>
 </html>
+
+          
