@@ -129,6 +129,8 @@
     .btn:hover{ background:#374151 }
     .btn-primary{ background:var(--accent); color:#071126 }
     .btn-good{ background:var(--good); color:#052e1e }
+    .btn-online{ background:linear-gradient(45deg, #059669, #2563eb); color:white; }
+    .btn-online:hover{ background:linear-gradient(45deg, #047857, #1d4ed8); }
     .input, textarea { width:100%; background:#0b1220; color:var(--text); border:1px solid #334155; border-radius:12px; padding:10px 12px }
     .kbd{ display:inline-flex; align-items:center; justify-content:center; min-width:32px; padding:6px 8px; border-radius:10px; border:1px solid #334155; background:#0b1220; font-weight:700; margin:4px; cursor:pointer; color:#ffffff }
     .kbd:hover:not([disabled]){ color:var(--accent); transform:translateY(-2px) }
@@ -136,7 +138,7 @@
     .row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap }
     .pill{ padding:6px 10px; border-radius:999px; border:1px solid #374151; background:#0b1220; font-weight:700 }
     .hidden{ display:none !important }
-    .word{ letter-spacing:.3em; font-size:36px; font-weight:800; text-align:center; padding:12px 16px; border-radius:12px; background:#0b1220; border:1px dashed #334155 }
+    .word{ letter-spacing:.3em; font-size:36px; font-weight:800; text-align:center; padding:12px 16px; border-radius:12px; background:#0b1220; border:1px dashed #334155; white-space:pre; }
     .progress{ width:100%; background:#0b1220; border:1px solid #334155; border-radius:12px; overflow:hidden; height:12px }
     .bar{ height:100%; background:var(--accent); width:0%; transition:width .3s }
     table{ width:100%; border-collapse:collapse }
@@ -146,6 +148,56 @@
     .footnote{ font-size:12px; opacity:.85 }
     .tag{ font-size:12px; opacity:.9 }
     .center{ text-align:center }
+    .loading { opacity: 0.6; pointer-events: none; }
+    .error-msg { color: var(--bad); font-size: 12px; margin-top: 4px; }
+    .success-msg { color: var(--good); font-size: 12px; margin-top: 4px; }
+    .online-indicator { 
+      display: inline-block; 
+      width: 8px; 
+      height: 8px; 
+      background: var(--good); 
+      border-radius: 50%; 
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+    .offline-indicator {
+      display: inline-block; 
+      width: 8px; 
+      height: 8px; 
+      background: var(--bad); 
+      border-radius: 50%; 
+      margin-right: 6px;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    .ranking-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      border: 1px solid #374151;
+      background: var(--muted);
+      color: var(--text);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #071126;
+    }
+    .tab-btn:hover {
+      background: #374151;
+    }
+    .tab-btn.active:hover {
+      background: var(--accent);
+    }
     @media (max-width:700px){.grid-2{grid-template-columns:1fr}}
   </style>
 </head>
@@ -163,6 +215,10 @@
     <div class="card" id="screen-login">
       <h1>🔐 Hangman: Harvest Town Edition— Player Login</h1>
       <p>Enter your IGN and Player ID to play. Words are curated by the Host.</p>
+      <div id="connection-status" class="row" style="margin-bottom: 12px;">
+        <span class="offline-indicator"></span>
+        <span class="footnote">Connecting to online rankings...</span>
+      </div>
       <h3>HOW TO PLAY: <h3>
         <h4><li>Guess one letter at a time. Correct guesses reveal letters.
         <li>Wrong guesses draw the hangman. You have limited lives.
@@ -178,16 +234,33 @@
         </div>
       </div>
       <div class="row" style="margin-top:12px;justify-content:space-between;">
-        <div class="footnote">After game ends (30 rounds), your score is added to the local ranking.</div>
+        <div class="footnote">After game ends (30 rounds), your score is added to both local and online rankings.</div>
         <button id="btnStart" class="btn btn-primary">Start Game</button>
       </div>
       <div class="center" style="margin-top:12px">
-        <button id="toggleLeaderboardBtn" class="btn">View Leaderboard</button>
+        <button id="toggleLeaderboardBtn" class="btn">View Rankings</button>
       </div>
-      <table id="leaderboardLoginTable" class="hidden" style="margin:12px auto;width:90%;max-width:700px">
-        <thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead>
-        <tbody></tbody>
-      </table>
+      
+      <!-- Rankings Section -->
+      <div id="rankingsSection" class="hidden" style="margin-top: 16px;">
+        <div class="ranking-tabs">
+          <button class="tab-btn active" data-tab="local">🏠 Local</button>
+          <button class="tab-btn" data-tab="online">🌐 Online</button>
+        </div>
+        
+        <table id="leaderboardLocalTable" style="margin:12px auto;width:90%;max-width:700px">
+          <thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        
+        <table id="leaderboardOnlineTable" class="hidden" style="margin:12px auto;width:90%;max-width:700px">
+          <thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        
+        <div id="onlineRankingStatus" class="center footnote" style="margin-top: 8px;"></div>
+      </div>
+      
       <hr style="margin:18px 0;border-color:#1f2937" />
       <details>
         <summary>🛠️ Settings(host only)</summary>
@@ -233,7 +306,7 @@
             <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
               <button id="btnApplyHost" class="btn btn-good">Apply Host Settings</button>
               <button id="btnLockHost" class="btn">Lock Host Settings</button>
-              <button id="btnClearLeaderboard" class="btn" style="margin-left:6px">Clear Leaderboard</button>
+              <button id="btnClearLeaderboard" class="btn" style="margin-left:6px">Clear Local Leaderboard</button>
             </div>
             <div class="footnote" style="margin-top:10px">Players cannot access or change these without the passcode. All words are stored locally in this browser.</div>
           </div>
@@ -280,13 +353,26 @@
     <div id="screen-finale" class="card hidden">
       <h2>🏁 Game Over — Final Score</h2>
       <p id="finalLine"></p>
+      <div id="onlineSubmissionStatus" style="margin: 12px 0;"></div>
       <div class="grid grid-2">
         <div>
           <div class="card" style="background:#0b1220"><h3>Your Breakdown</h3><ul id="breakdown"></ul></div>
         </div>
         <div>
-          <div class="card" style="background:#0b1220"><h3>🏆 Local Ranking</h3>
-            <table><thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead><tbody id="rankBody"></tbody></table>
+          <div class="card" style="background:#0b1220">
+            <h3>🏆 Rankings</h3>
+            <div class="ranking-tabs">
+              <button class="tab-btn active" data-tab="final-local">🏠 Local</button>
+              <button class="tab-btn" data-tab="final-online">🌐 Online</button>
+            </div>
+            <table id="finalLocalTable">
+              <thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead>
+              <tbody id="rankBody"></tbody>
+            </table>
+            <table id="finalOnlineTable" class="hidden">
+              <thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead>
+              <tbody id="rankBodyOnline"></tbody>
+            </table>
             <div class="footnote" style="color:var(--warn)">There is no restart/play-again button.</div>
           </div>
         </div>
@@ -297,6 +383,17 @@
   <script>
     // Storage and Configuration
     const STORAGE_KEYS = { host: 'hangman_host_config_v1', rank: 'hangman_rankings_v1' };
+    
+    // Online Rankings Configuration
+    const ONLINE_CONFIG = {
+      baseUrl: 'https://api.jsonbin.io/v3/b',
+      binId: '67851c20e41b4d34e46336e0', // You'll need to create your own JSONBin
+      apiKey: '$2a$10$YourAPIKeyHere', // Replace with your actual API key
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': '$2a$10$YourAPIKeyHere' // Replace with your actual API key
+      }
+    };
     
     const DEFAULT_WORDS = {      
       easy: `apple\nmanor\nhoe\ncow\nsheep\nchicken\npeacock\npig\nmilk\negg\nbarn\nonion\ngarlic\nwheat\neel\npeach\nblueberry\nrose\ntulips\nbarl\nabu\nstone\nfoxy\nfay\nmay\npotato\nbean\ntomato\nmango\npumpkin\nbanana\ngrape\ntofu`,
@@ -314,6 +411,138 @@
         H: DEFAULT_WORDS.hard.split('\n') 
       } 
     };
+
+    // Online Rankings System
+    class OnlineRankings {
+      constructor() {
+        this.isOnline = false;
+        this.rankings = [];
+        this.lastFetch = null;
+        this.checkConnection();
+      }
+
+      async checkConnection() {
+        try {
+          const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}/latest`, {
+            method: 'GET',
+            headers: ONLINE_CONFIG.headers
+          });
+          
+          if (response.ok) {
+            this.isOnline = true;
+            this.updateConnectionStatus(true);
+            await this.fetchRankings();
+          } else {
+            this.handleOffline();
+          }
+        } catch (error) {
+          this.handleOffline();
+        }
+      }
+
+      handleOffline() {
+        this.isOnline = false;
+        this.updateConnectionStatus(false);
+        console.warn('Online rankings unavailable - using local only');
+      }
+
+      updateConnectionStatus(online) {
+        const statusEl = document.getElementById('connection-status');
+        const indicator = statusEl.querySelector('.offline-indicator, .online-indicator');
+        const text = statusEl.querySelector('span:last-child');
+        
+        if (online) {
+          indicator.className = 'online-indicator';
+          text.textContent = 'Connected to online rankings';
+        } else {
+          indicator.className = 'offline-indicator';
+          text.textContent = 'Offline mode - local rankings only';
+        }
+      }
+
+      async fetchRankings() {
+        if (!this.isOnline) return [];
+        
+        try {
+          const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}/latest`, {
+            method: 'GET',
+            headers: ONLINE_CONFIG.headers
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            this.rankings = data.record.rankings || [];
+            this.lastFetch = Date.now();
+            return this.rankings;
+          }
+        } catch (error) {
+          console.error('Failed to fetch online rankings:', error);
+          this.handleOffline();
+        }
+        return [];
+      }
+
+      async submitScore(playerData) {
+        if (!this.isOnline) {
+          return { success: false, error: 'Offline mode' };
+        }
+
+        try {
+          // First fetch current rankings to avoid conflicts
+          await this.fetchRankings();
+          
+          // Add new score
+          const newEntry = {
+            ign: playerData.ign,
+            pid: playerData.pid,
+            score: playerData.score,
+            date: new Date().toISOString(),
+            timestamp: Date.now()
+          };
+          
+          this.rankings.push(newEntry);
+          
+          // Sort by score (descending) then by timestamp (ascending for ties)
+          this.rankings.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.timestamp - b.timestamp;
+          });
+          
+          // Keep top 100
+          this.rankings = this.rankings.slice(0, 100);
+          
+          // Submit to JSONBin
+          const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}`, {
+            method: 'PUT',
+            headers: ONLINE_CONFIG.headers,
+            body: JSON.stringify({
+              rankings: this.rankings,
+              lastUpdated: new Date().toISOString()
+            })
+          });
+          
+          if (response.ok) {
+            return { success: true, rank: this.rankings.findIndex(r => 
+              r.ign === newEntry.ign && 
+              r.pid === newEntry.pid && 
+              r.timestamp === newEntry.timestamp
+            ) + 1 };
+          } else {
+            throw new Error('Failed to submit score');
+          }
+        } catch (error) {
+          console.error('Failed to submit score:', error);
+          return { success: false, error: error.message };
+        }
+      }
+
+      getRankings() {
+        return this.rankings;
+      }
+    }
+
+    // Initialize online rankings
+    const onlineRankings = new OnlineRankings();
 
     // Storage Functions
     function loadHostConfig() {
@@ -382,10 +611,15 @@
       misses: document.getElementById('misses'),
       hits: document.getElementById('hits'),
       rankBody: document.getElementById('rankBody'),
+      rankBodyOnline: document.getElementById('rankBodyOnline'),
       finalLine: document.getElementById('finalLine'),
       breakdown: document.getElementById('breakdown'),
-      leaderboardLoginTable: document.querySelector('#leaderboardLoginTable tbody'),
-      toggleLeaderboardBtn: document.getElementById('toggleLeaderboardBtn')
+      leaderboardLocalTable: document.querySelector('#leaderboardLocalTable tbody'),
+      leaderboardOnlineTable: document.querySelector('#leaderboardOnlineTable tbody'),
+      toggleLeaderboardBtn: document.getElementById('toggleLeaderboardBtn'),
+      rankingsSection: document.getElementById('rankingsSection'),
+      onlineRankingStatus: document.getElementById('onlineRankingStatus'),
+      onlineSubmissionStatus: document.getElementById('onlineSubmissionStatus')
     };
 
     // Initialize display
@@ -473,15 +707,36 @@
 
     function setWord(w) {
       state.word = w;
-      state.revealed = w.split('').map(ch => /^[a-z]$/i.test(ch) ? '_' : ch);
+      state.revealed = w.split('').map(ch => {
+        if (/^[a-z]$/i.test(ch)) return '_';
+        return ch; // Keep spaces and other characters as-is
+      });
       state.used = new Set();
       state.lives = hostCfg.lives;
       state.misses = 0;
       state.hits = 0;
-      elements.wordDisplay.textContent = state.revealed.join(' ');
+      updateWordDisplay();
       elements.statusMsg.textContent = 'Pick a letter…';
       updateHUD();
       buildKeyboard();
+    }
+
+    function updateWordDisplay() {
+      // Create display with proper spacing for multi-word phrases
+      let display = '';
+      for (let i = 0; i < state.revealed.length; i++) {
+        const char = state.revealed[i];
+        if (char === ' ') {
+          display += '\u00A0\u00A0\u00A0\u00A0\u00A0'; // Non-breaking spaces for word separation
+        } else {
+          display += char;
+          // Add single space between letters (except before spaces)
+          if (i < state.revealed.length - 1 && state.revealed[i + 1] !== ' ') {
+            display += '\u00A0'; // Non-breaking space between letters
+          }
+        }
+      }
+      elements.wordDisplay.textContent = display;
     }
 
     function buildKeyboard() {
@@ -509,9 +764,13 @@
       if (indices.length) {
         indices.forEach(i => state.revealed[i] = state.word[i]);
         state.hits += 1;
-        elements.wordDisplay.textContent = state.revealed.join(' ');
+        updateWordDisplay();
         updateHUD();
-        if (state.revealed.join('') === state.word) endRound(true);
+        // Check if word is complete (only counting letters, not spaces)
+        const wordComplete = state.revealed.every((char, i) => 
+          char === state.word[i] || !/^[a-z]$/i.test(state.word[i])
+        );
+        if (wordComplete) endRound(true);
       } else {
         state.misses += 1;
         state.lives -= 1;
@@ -551,7 +810,7 @@
       elements.screenGame.classList.remove('hidden');
     }
 
-    function finishGame() {
+    async function finishGame() {
       elements.screenGame.classList.add('hidden');
       elements.screenFinale.classList.remove('hidden');
       elements.finalLine.textContent = `${state.ign} — ${state.pid} scored ${state.score} points.`;
@@ -563,22 +822,121 @@
         elements.breakdown.appendChild(li);
       });
       
+      // Save to local rankings
       const ranks = getRanking();
       ranks.push({ ign: state.ign, pid: state.pid, score: state.score, date: new Date().toLocaleString() });
       ranks.sort((a, b) => b.score - a.score);
       saveRanking(ranks.slice(0, 100));
-      renderRanking();
+      
+      // Submit to online rankings
+      await submitOnlineScore();
+      
+      renderFinalRankings();
     }
 
-    function renderRanking() {
+    async function submitOnlineScore() {
+      const statusEl = elements.onlineSubmissionStatus;
+      
+      if (!onlineRankings.isOnline) {
+        statusEl.innerHTML = '<span class="error-msg">⚠️ Score saved locally only - no internet connection</span>';
+        return;
+      }
+      
+      statusEl.innerHTML = '<span class="footnote">🔄 Submitting to online rankings...</span>';
+      
+      const result = await onlineRankings.submitScore({
+        ign: state.ign,
+        pid: state.pid,
+        score: state.score
+      });
+      
+      if (result.success) {
+        statusEl.innerHTML = `<span class="success-msg">✅ Score submitted! You ranked #${result.rank} globally!</span>`;
+      } else {
+        statusEl.innerHTML = `<span class="error-msg">❌ Failed to submit online: ${result.error}</span>`;
+      }
+    }
+
+    function renderLocalRankings(tbody) {
       const ranks = getRanking();
-      elements.rankBody.innerHTML = '';
-      if (elements.leaderboardLoginTable) elements.leaderboardLoginTable.innerHTML = '';
+      tbody.innerHTML = '';
       
       ranks.forEach((r, idx) => {
-        const tr = `<tr><td>${idx + 1}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${r.date}</td></tr>`;
-        elements.rankBody.innerHTML += tr;
-        if (elements.leaderboardLoginTable) elements.leaderboardLoginTable.innerHTML += tr;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${idx + 1}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${r.date}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function renderOnlineRankings(tbody, statusEl) {
+      if (!onlineRankings.isOnline) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; opacity: 0.6;">Offline - online rankings unavailable</td></tr>';
+        if (statusEl) statusEl.textContent = 'Connect to internet to view global rankings';
+        return;
+      }
+      
+      if (statusEl) statusEl.textContent = 'Loading online rankings...';
+      
+      try {
+        const onlineRanks = await onlineRankings.fetchRankings();
+        tbody.innerHTML = '';
+        
+        if (onlineRanks.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; opacity: 0.6;">No online scores yet - be the first!</td></tr>';
+          if (statusEl) statusEl.textContent = 'No global scores recorded yet';
+          return;
+        }
+        
+        onlineRanks.forEach((r, idx) => {
+          const tr = document.createElement('tr');
+          const date = new Date(r.date).toLocaleString();
+          tr.innerHTML = `<td>${idx + 1}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${date}</td>`;
+          tbody.appendChild(tr);
+        });
+        
+        if (statusEl) statusEl.textContent = `${onlineRanks.length} global scores • Last updated: ${new Date().toLocaleString()}`;
+      } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; opacity: 0.6;">Failed to load online rankings</td></tr>';
+        if (statusEl) statusEl.textContent = 'Failed to load global rankings';
+      }
+    }
+
+    function renderFinalRankings() {
+      renderLocalRankings(elements.rankBody);
+      renderOnlineRankings(elements.rankBodyOnline);
+    }
+
+    // Tab Management
+    function setupTabs() {
+      document.addEventListener('click', (e) => {
+        if (!e.target.matches('[data-tab]')) return;
+        
+        const tab = e.target.dataset.tab;
+        const container = e.target.closest('#rankingsSection, #screen-finale');
+        
+        if (!container) return;
+        
+        // Update tab buttons
+        container.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+        
+        // Show/hide tables
+        if (container.id === 'rankingsSection') {
+          elements.leaderboardLocalTable.parentElement.classList.toggle('hidden', tab !== 'local');
+          elements.leaderboardOnlineTable.parentElement.classList.toggle('hidden', tab !== 'online');
+          
+          if (tab === 'online') {
+            renderOnlineRankings(elements.leaderboardOnlineTable, elements.onlineRankingStatus);
+          }
+        } else {
+          document.getElementById('finalLocalTable').classList.toggle('hidden', tab !== 'final-local');
+          document.getElementById('finalOnlineTable').classList.toggle('hidden', tab !== 'final-online');
+          
+          if (tab === 'final-online') {
+            renderOnlineRankings(elements.rankBodyOnline);
+          }
+        }
       });
     }
 
@@ -628,16 +986,19 @@
     };
 
     elements.btnClearLeaderboard.onclick = () => {
-      if (confirm('Clear all scores?')) {
+      if (confirm('Clear all local scores? (This will not affect online rankings)')) {
         localStorage.removeItem(STORAGE_KEYS.rank);
-        renderRanking();
-        alert('Leaderboard cleared!');
+        renderLocalRankings(elements.leaderboardLocalTable);
+        alert('Local leaderboard cleared!');
       }
     };
 
     elements.toggleLeaderboardBtn.onclick = () => {
-      document.getElementById('leaderboardLoginTable').classList.toggle('hidden');
-      renderRanking();
+      elements.rankingsSection.classList.toggle('hidden');
+      if (!elements.rankingsSection.classList.contains('hidden')) {
+        renderLocalRankings(elements.leaderboardLocalTable);
+        // Don't auto-load online rankings to save API calls
+      }
     };
 
     // Keyboard support
@@ -649,7 +1010,8 @@
     });
 
     // Initialize
-    renderRanking();
+    setupTabs();
+    renderLocalRankings(elements.leaderboardLocalTable);
   </script>
 </body>
 </html>
