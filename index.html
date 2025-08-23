@@ -307,6 +307,7 @@
               <button id="btnApplyHost" class="btn btn-good">Apply Host Settings</button>
               <button id="btnLockHost" class="btn">Lock Host Settings</button>
               <button id="btnClearLeaderboard" class="btn" style="margin-left:6px">Clear Local Leaderboard</button>
+              <button id="btnClearOnlineLeaderboard" class="btn btn-online" style="margin-left:6px">Clear Online Leaderboard</button>
             </div>
             <div class="footnote" style="margin-top:10px">Players cannot access or change these without the passcode. All words are stored locally in this browser.</div>
           </div>
@@ -998,6 +999,34 @@
       if (!elements.rankingsSection.classList.contains('hidden')) {
         renderLocalRankings(elements.leaderboardLocalTable);
         // Don't auto-load online rankings to save API calls
+      }
+    };
+
+    elements.btnClearOnlineLeaderboard = document.getElementById('btnClearOnlineLeaderboard');
+     elements.btnClearOnlineLeaderboard.onclick = async () => {
+      if (!onlineRankings.isOnline) {
+        alert('Cannot clear online leaderboard — not connected.');
+        return;
+      }
+      if (!confirm('⚠️ This will permanently clear ALL online rankings for everyone. Continue?')) return;
+      
+      try {
+        const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}`, {
+          method: 'PUT',
+          headers: ONLINE_CONFIG.headers,
+          body: JSON.stringify({ rankings: [], lastUpdated: new Date().toISOString() })
+        });
+        
+        if (response.ok) {
+          alert('✅ Online leaderboard cleared!');
+          onlineRankings.rankings = [];
+          renderOnlineRankings(elements.leaderboardOnlineTable, elements.onlineRankingStatus);
+        } else {
+          alert('❌ Failed to clear online leaderboard');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('❌ Error clearing online leaderboard: ' + err.message);
       }
     };
 
