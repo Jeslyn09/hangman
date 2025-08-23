@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hangman: Harvest Town Edition — Fixed</title>
+  <title>Hangman: Harvest Town Edition – Fixed</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -17,6 +17,13 @@
     }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color: var(--text); }
+    
+    /* Container for proper mobile spacing */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
     
     /* Banner Styles */
     .banner {
@@ -138,7 +145,65 @@
     .row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap }
     .pill{ padding:6px 10px; border-radius:999px; border:1px solid #374151; background:#0b1220; font-weight:700 }
     .hidden{ display:none !important }
-    .word{ letter-spacing:.3em; font-size:36px; font-weight:800; text-align:center; padding:12px 16px; border-radius:12px; background:#0b1220; border:1px dashed #334155; white-space:pre; }
+    
+    /* Improved word display with mobile responsiveness */
+    .word{ 
+      font-family: 'Courier New', monospace;
+      font-weight: 800; 
+      text-align: center; 
+      padding: 16px 12px; 
+      border-radius: 12px; 
+      background: #0b1220; 
+      border: 1px dashed #334155; 
+      line-height: 1.4;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: none;
+      /* Responsive font sizing */
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      /* Responsive letter spacing */
+      letter-spacing: clamp(0.1em, 0.5vw, 0.3em);
+      /* Allow text to wrap to multiple lines */
+      white-space: pre-wrap;
+      /* Ensure it doesn't overflow horizontally */
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    
+    /* Specific mobile adjustments for word display */
+    @media (max-width: 768px) {
+      .word {
+        font-size: clamp(1.2rem, 5vw, 1.8rem);
+        letter-spacing: clamp(0.05em, 0.3vw, 0.2em);
+        padding: 12px 8px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .word {
+        font-size: clamp(1rem, 6vw, 1.4rem);
+        letter-spacing: clamp(0.03em, 0.2vw, 0.15em);
+        padding: 10px 6px;
+      }
+    }
+    
+    /* Ensure keyboard doesn't overflow on mobile */
+    #keyboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+    }
+    
+    @media (max-width: 480px) {
+      .kbd {
+        min-width: 28px;
+        padding: 4px 6px;
+        margin: 2px;
+        font-size: 0.9rem;
+      }
+    }
+    
     .progress{ width:100%; background:#0b1220; border:1px solid #334155; border-radius:12px; overflow:hidden; height:12px }
     .bar{ height:100%; background:var(--accent); width:0%; transition:width .3s }
     table{ width:100%; border-collapse:collapse }
@@ -199,6 +264,30 @@
       background: var(--accent);
     }
     @media (max-width:700px){.grid-2{grid-template-columns:1fr}}
+    
+    /* Mobile responsiveness for scorebox */
+    @media (max-width: 600px) {
+      .scorebox {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 6px !important;
+      }
+      .card {
+        padding: 16px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 12px;
+      }
+      .row {
+        gap: 8px;
+      }
+      .pill {
+        font-size: 11px;
+        padding: 4px 8px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -208,12 +297,12 @@
       <h1 class="banner-title">🌾 HARVEST TOWN 🌾</h1>
       <p class="banner-subtitle">Welcome to the Harvest Town Hangman Challenge!</p>
     </div>
-    <div class="banner-icons">🚜🌽🐄</div>
+    <div class="banner-icons">🚜🌽🍄</div>
   </div>
   <div class="container">
     <!-- Login Screen -->
     <div class="card" id="screen-login">
-      <h1>🔐 Hangman: Harvest Town Edition— Player Login</h1>
+      <h1>🔍 Hangman: Harvest Town Edition– Player Login</h1>
       <p>Enter your IGN and Player ID to play. Words are curated by the Host.</p>
       <div id="connection-status" class="row" style="margin-bottom: 12px;">
         <span class="offline-indicator"></span>
@@ -320,7 +409,7 @@
       <div class="row" style="justify-content:space-between;align-items:flex-start">
         <div>
           <h2>🎯 Hangman: Harvest Town</h2>
-          <div class="tag" id="playerTag">IGN — Player ID</div>
+          <div class="tag" id="playerTag">IGN – Player ID</div>
         </div>
         <div class="scorebox" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
           <div><div class="tag">Round</div><div id="roundInfo">1 / 30</div></div>
@@ -352,7 +441,7 @@
 
     <!-- Final Screen -->
     <div id="screen-finale" class="card hidden">
-      <h2>🏁 Game Over — Final Score</h2>
+      <h2>🎮 Game Over – Final Score</h2>
       <p id="finalLine"></p>
       <div id="onlineSubmissionStatus" style="margin: 12px 0;"></div>
       <div class="grid grid-2">
@@ -475,61 +564,6 @@
             this.rankings = data.record.rankings || [];
             this.lastFetch = Date.now();
             return this.rankings;
-          }
-        } catch (error) {
-          console.error('Failed to fetch online rankings:', error);
-          this.handleOffline();
-        }
-        return [];
-      }
-
-      async submitScore(playerData) {
-        if (!this.isOnline) {
-          return { success: false, error: 'Offline mode' };
-        }
-
-        try {
-          // First fetch current rankings to avoid conflicts
-          await this.fetchRankings();
-          
-          // Add new score
-          const newEntry = {
-            ign: playerData.ign,
-            pid: playerData.pid,
-            score: playerData.score,
-            date: new Date().toISOString(),
-            timestamp: Date.now()
-          };
-          
-          this.rankings.push(newEntry);
-          
-          // Sort by score (descending) then by timestamp (ascending for ties)
-          this.rankings.sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            return a.timestamp - b.timestamp;
-          });
-          
-          // Keep top 100
-          this.rankings = this.rankings.slice(0, 100);
-          
-          // Submit to JSONBin
-          const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}`, {
-            method: 'PUT',
-            headers: ONLINE_CONFIG.headers,
-            body: JSON.stringify({
-              rankings: this.rankings,
-              lastUpdated: new Date().toISOString()
-            })
-          });
-          
-          if (response.ok) {
-            return { success: true, rank: this.rankings.findIndex(r => 
-              r.ign === newEntry.ign && 
-              r.pid === newEntry.pid && 
-              r.timestamp === newEntry.timestamp
-            ) + 1 };
-          } else {
-            throw new Error('Failed to submit score');
           }
         } catch (error) {
           console.error('Failed to submit score:', error);
@@ -684,7 +718,7 @@
     }
 
     function updateHUD() {
-      elements.playerTag.textContent = `${state.ign} — ${state.pid}`;
+      elements.playerTag.textContent = `${state.ign} – ${state.pid}`;
       elements.roundInfo.textContent = `${state.round} / ${state.totalRounds}`;
       const tierName = state.tier === 'E' ? 'Easy' : (state.tier === 'M' ? 'Medium' : 'Hard');
       elements.phaseInfo.textContent = `${tierName} ${state.tierIndex + 1}/10`;
@@ -694,7 +728,7 @@
       elements.misses.textContent = state.misses;
       elements.hits.textContent = state.hits;
       elements.progBar.style.width = `${((state.round - 1) / state.totalRounds) * 100}%`;
-      elements.usedLetters.textContent = 'Used: ' + (Array.from(state.used).sort().join(' ') || '—');
+      elements.usedLetters.textContent = 'Used: ' + (Array.from(state.used).sort().join(' ') || '–');
       drawGallows(state.lives);
     }
 
@@ -723,21 +757,45 @@
     }
 
     function updateWordDisplay() {
-      // Create display with proper spacing for multi-word phrases
-      let display = '';
-      for (let i = 0; i < state.revealed.length; i++) {
-        const char = state.revealed[i];
-        if (char === ' ') {
-          display += '\u00A0\u00A0\u00A0\u00A0\u00A0'; // Non-breaking spaces for word separation
-        } else {
-          display += char;
-          // Add single space between letters (except before spaces)
-          if (i < state.revealed.length - 1 && state.revealed[i + 1] !== ' ') {
-            display += '\u00A0'; // Non-breaking space between letters
+      // Improved display logic for better mobile handling
+      const words = state.word.split(' ');
+      
+      if (words.length === 1) {
+        // Single word - use regular spacing
+        let display = '';
+        for (let i = 0; i < state.revealed.length; i++) {
+          display += state.revealed[i];
+          if (i < state.revealed.length - 1) {
+            display += ' '; // Space between letters
           }
         }
+        elements.wordDisplay.textContent = display;
+      } else {
+        // Multi-word - create line breaks for better mobile display
+        let display = '';
+        let currentPos = 0;
+        
+        for (let wordIndex = 0; wordIndex < words.length; wordIndex++) {
+          const word = words[wordIndex];
+          
+          // Add letters for current word
+          for (let letterIndex = 0; letterIndex < word.length; letterIndex++) {
+            display += state.revealed[currentPos];
+            if (letterIndex < word.length - 1) {
+              display += ' '; // Space between letters in same word
+            }
+            currentPos++;
+          }
+          
+          // Add word separator (line break for mobile, larger space for desktop)
+          if (wordIndex < words.length - 1) {
+            display += '\n'; // Line break between words
+            currentPos++; // Skip the space character in the original word
+          }
+        }
+        
+        elements.wordDisplay.textContent = display;
       }
-      elements.wordDisplay.textContent = display;
     }
 
     function buildKeyboard() {
@@ -786,11 +844,11 @@
       if (solved) {
         gained = base + state.lives;
         state.score += gained;
-        elements.statusMsg.textContent = `✔ Correct! +${gained} points`;
+        elements.statusMsg.textContent = `✓ Correct! +${gained} points`;
       } else {
-        elements.statusMsg.textContent = `✖ The word was "${state.word}"`;
+        elements.statusMsg.textContent = `✗ The word was "${state.word}"`;
       }
-      state.breakdown.push(`${state.round}. [${state.tier}] ${state.word} — ${solved ? `Solved, +${gained}` : 'Failed'}`);
+      state.breakdown.push(`${state.round}. [${state.tier}] ${state.word} – ${solved ? `Solved, +${gained}` : 'Failed'}`);
       
       setTimeout(() => {
         state.round++;
@@ -814,7 +872,7 @@
     async function finishGame() {
       elements.screenGame.classList.add('hidden');
       elements.screenFinale.classList.remove('hidden');
-      elements.finalLine.textContent = `${state.ign} — ${state.pid} scored ${state.score} points.`;
+      elements.finalLine.textContent = `${state.ign} – ${state.pid} scored ${state.score} points.`;
       
       elements.breakdown.innerHTML = '';
       state.breakdown.forEach(line => {
@@ -843,7 +901,7 @@
         return;
       }
       
-      statusEl.innerHTML = '<span class="footnote">🔄 Submitting to online rankings...</span>';
+      statusEl.innerHTML = '<span class="footnote">📤 Submitting to online rankings...</span>';
       
       const result = await onlineRankings.submitScore({
         ign: state.ign,
@@ -854,7 +912,7 @@
       if (result.success) {
         statusEl.innerHTML = `<span class="success-msg">✅ Score submitted! You ranked #${result.rank} globally!</span>`;
       } else {
-        statusEl.innerHTML = `<span class="error-msg">❌ Failed to submit online: ${result.error}</span>`;
+        statusEl.innerHTML = `<span class="error-msg">⌫ Failed to submit online: ${result.error}</span>`;
       }
     }
 
@@ -1005,7 +1063,7 @@
     elements.btnClearOnlineLeaderboard = document.getElementById('btnClearOnlineLeaderboard');
      elements.btnClearOnlineLeaderboard.onclick = async () => {
       if (!onlineRankings.isOnline) {
-        alert('Cannot clear online leaderboard — not connected.');
+        alert('Cannot clear online leaderboard – not connected.');
         return;
       }
       if (!confirm('⚠️ This will permanently clear ALL online rankings for everyone. Continue?')) return;
@@ -1022,11 +1080,11 @@
           onlineRankings.rankings = [];
           renderOnlineRankings(elements.leaderboardOnlineTable, elements.onlineRankingStatus);
         } else {
-          alert('❌ Failed to clear online leaderboard');
+          alert('⌫ Failed to clear online leaderboard');
         }
       } catch (err) {
         console.error(err);
-        alert('❌ Error clearing online leaderboard: ' + err.message);
+        alert('⌫ Error clearing online leaderboard: ' + err.message);
       }
     };
 
@@ -1043,4 +1101,59 @@
     renderLocalRankings(elements.leaderboardLocalTable);
   </script>
 </body>
-</html>
+</html>('Failed to fetch online rankings:', error);
+          this.handleOffline();
+        }
+        return [];
+      }
+
+      async submitScore(playerData) {
+        if (!this.isOnline) {
+          return { success: false, error: 'Offline mode' };
+        }
+
+        try {
+          // First fetch current rankings to avoid conflicts
+          await this.fetchRankings();
+          
+          // Add new score
+          const newEntry = {
+            ign: playerData.ign,
+            pid: playerData.pid,
+            score: playerData.score,
+            date: new Date().toISOString(),
+            timestamp: Date.now()
+          };
+          
+          this.rankings.push(newEntry);
+          
+          // Sort by score (descending) then by timestamp (ascending for ties)
+          this.rankings.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.timestamp - b.timestamp;
+          });
+          
+          // Keep top 100
+          this.rankings = this.rankings.slice(0, 100);
+          
+          // Submit to JSONBin
+          const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}`, {
+            method: 'PUT',
+            headers: ONLINE_CONFIG.headers,
+            body: JSON.stringify({
+              rankings: this.rankings,
+              lastUpdated: new Date().toISOString()
+            })
+          });
+          
+          if (response.ok) {
+            return { success: true, rank: this.rankings.findIndex(r => 
+              r.ign === newEntry.ign && 
+              r.pid === newEntry.pid && 
+              r.timestamp === newEntry.timestamp
+            ) + 1 };
+          } else {
+            throw new Error('Failed to submit score');
+          }
+        } catch (error) {
+          console.error
