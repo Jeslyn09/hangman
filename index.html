@@ -1,9 +1,9 @@
-    }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hangman: Harvest Town Edition – Fixed</title>
+  <title>Hangman: Harvest Town Edition — Fixed</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -160,18 +160,13 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
       hyphens: none;
-      /* Responsive font sizing */
       font-size: clamp(1.5rem, 4vw, 2.25rem);
-      /* Responsive letter spacing */
       letter-spacing: clamp(0.1em, 0.5vw, 0.3em);
-      /* Allow text to wrap to multiple lines */
       white-space: pre-wrap;
-      /* Ensure it doesn't overflow horizontally */
       max-width: 100%;
       box-sizing: border-box;
     }
     
-    /* Specific mobile adjustments for word display */
     @media (max-width: 768px) {
       .word {
         font-size: clamp(1.2rem, 5vw, 1.8rem);
@@ -188,7 +183,6 @@
       }
     }
     
-    /* Ensure keyboard doesn't overflow on mobile */
     #keyboard {
       display: flex;
       flex-wrap: wrap;
@@ -275,7 +269,6 @@
     }
     @media (max-width:700px){.grid-2{grid-template-columns:1fr}}
     
-    /* Mobile responsiveness for scorebox */
     @media (max-width: 600px) {
       .scorebox {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -301,7 +294,6 @@
   </style>
 </head>
 <body>
-  <!-- Animated Banner -->
   <div class="banner">
     <div class="banner-content">
       <h1 class="banner-title">🌾 HARVEST TOWN 🌾</h1>
@@ -312,16 +304,18 @@
   <div class="container">
     <!-- Login Screen -->
     <div class="card" id="screen-login">
-      <h1>🔍 Hangman: Harvest Town Edition– Player Login</h1>
+      <h1>🔍 Hangman: Harvest Town Edition— Player Login</h1>
       <p>Enter your IGN and Player ID to play. Words are curated by the Host.</p>
       <div id="connection-status" class="row" style="margin-bottom: 12px;">
         <span class="offline-indicator"></span>
         <span class="footnote">Connecting to online rankings...</span>
       </div>
-      <h3>HOW TO PLAY: <h3>
-        <h4><li>Guess one letter at a time. Correct guesses reveal letters.
-        <li>Wrong guesses draw the hangman. You have limited lives.
-        <li>Reveal the answer before you run out of lives. Goodluck!<h4>
+      <h3>HOW TO PLAY:</h3>
+      <ul>
+        <li>Guess one letter at a time. Correct guesses reveal letters.</li>
+        <li>Wrong guesses draw the hangman. You have limited lives.</li>
+        <li>Reveal the answer before you run out of lives. Good luck!</li>
+      </ul>
       <div class="grid grid-2">
         <div>
           <label for="ign">IGN</label>
@@ -344,7 +338,7 @@
       <div id="rankingsSection" class="hidden" style="margin-top: 16px;">
         <div class="ranking-tabs">
           <button class="tab-btn active" data-tab="local">🏠 Local</button>
-          <button class="tab-btn" data-tab="online">🌐 Online</button>
+          <button class="tab-btn" data-tab="online">🌍 Online</button>
         </div>
         
         <table id="leaderboardLocalTable" style="margin:12px auto;width:90%;max-width:700px">
@@ -369,7 +363,8 @@
             <input id="hostPass" class="input" type="password" placeholder="passcode" style="max-width:280px" />
             <button id="btnCheckPassword" class="btn">Unlock Host Settings</button>
             <div id="hiddenContent" style="display: none;">
-            <div class="footnote" style="margin-left:6px">Passcode: <code id="passnote">HTGMHARYU1324</code></div>
+              <div class="footnote" style="margin-left:6px">Passcode: <code id="passnote">HTGMHARYU1324</code></div>
+            </div>
           </div>
           <div id="hostControls" class="hidden" style="margin-top:12px">
             <div class="grid grid-3">
@@ -419,7 +414,7 @@
       <div class="row" style="justify-content:space-between;align-items:flex-start">
         <div>
           <h2>🎯 Hangman: Harvest Town</h2>
-          <div class="tag" id="playerTag">IGN – Player ID</div>
+          <div class="tag" id="playerTag">IGN — Player ID</div>
         </div>
         <div class="scorebox" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
           <div><div class="tag">Round</div><div id="roundInfo">1 / 30</div></div>
@@ -451,7 +446,7 @@
 
     <!-- Final Screen -->
     <div id="screen-finale" class="card hidden">
-      <h2>🎮 Game Over – Final Score</h2>
+      <h2>🎮 Game Over — Final Score</h2>
       <p id="finalLine"></p>
       <div id="onlineSubmissionStatus" style="margin: 12px 0;"></div>
       <div class="grid grid-2">
@@ -463,7 +458,7 @@
             <h3>🏆 Rankings</h3>
             <div class="ranking-tabs">
               <button class="tab-btn active" data-tab="final-local">🏠 Local</button>
-              <button class="tab-btn" data-tab="final-online">🌐 Online</button>
+              <button class="tab-btn" data-tab="final-online">🌍 Online</button>
             </div>
             <table id="finalLocalTable">
               <thead><tr><th>#</th><th>IGN</th><th>Player ID</th><th>Score</th><th>Date</th></tr></thead>
@@ -531,8 +526,12 @@
 
       updateConnectionStatus(online) {
         const statusEl = document.getElementById('connection-status');
+        if (!statusEl) return;
+        
         const indicator = statusEl.querySelector('.local-indicator, .online-indicator, .offline-indicator');
         const text = statusEl.querySelector('span:last-child');
+        
+        if (!indicator || !text) return;
         
         if (online) {
           indicator.className = 'online-indicator';
@@ -572,10 +571,8 @@
         }
 
         try {
-          // First fetch current rankings to avoid conflicts
           await this.fetchRankings();
           
-          // Add new score
           const newEntry = {
             ign: playerData.ign,
             pid: playerData.pid,
@@ -585,17 +582,13 @@
           };
           
           this.rankings.push(newEntry);
-          
-          // Sort by score (descending) then by timestamp (ascending for ties)
           this.rankings.sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
             return a.timestamp - b.timestamp;
           });
           
-          // Keep top 100
           this.rankings = this.rankings.slice(0, ONLINE_CONFIG.maxRankings);
           
-          // Submit to JSONBin
           const response = await fetch(`${ONLINE_CONFIG.baseUrl}/${ONLINE_CONFIG.binId}`, {
             method: 'PUT',
             headers: ONLINE_CONFIG.headers,
@@ -662,8 +655,7 @@
       medium: `sunflower\nnapa cabbage\nmallow root\nvegetable juice\norange juice\nshiitake sauce\ncurry sauce\ncopper ingot\nrefined quartz\nmiddle bait\npoultry feed\napple milkshake\nred piranha\nstone fish\nsturgeon\ngarra lamta\nstarfish\nskipjack tuna\ncherry pie\nsweet carp\nseaweed dish\nfried egg\ntangerine pudding\nlocket\nbrooch\nice cream\nfishing rod\nshovel\ndark essence`,
       hard: `ella cole\ntom cole\nandy reed\nbonfire party\nbeach party\nhair-caring ginseng powder\ncordyceps powder\nginseng powder\ngastrodia powder\nbanana crisp\nchocolate bar\near-shaped cracker\nspicy fish head\nsauteed wax gourd\nyolk-baked corn\ngrass carp sashimi\nspider necklace\nshell crown\nmilk pudding\nblueberry pie\npumpkin cake\nhoneysuckle tea\ncooling tea\nqueen scale powder\nscale powder\nmary morris\nsteve lopez`
     };
-    
-    const DEFAULT_CONFIG = { 
+     const DEFAULT_CONFIG = { 
       passcode: 'HTGMHARYU1324', 
       lives: 6, 
       scoreBase: { E: 1, M: 3, H: 5 }, 
@@ -674,31 +666,29 @@
       } 
     };
 
-    // Storage Functions
+    // Storage Functions - Using in-memory storage instead of localStorage
+    let gameData = {
+      hostConfig: null,
+      rankings: []
+    };
+
     function loadHostConfig() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEYS.host);
-        if (!raw) return structuredClone(DEFAULT_CONFIG);
-        return JSON.parse(raw);
-      } catch (e) {
-        return structuredClone(DEFAULT_CONFIG);
+      if (!gameData.hostConfig) {
+        gameData.hostConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
       }
+      return gameData.hostConfig;
     }
 
     function saveHostConfig(cfg) { 
-      localStorage.setItem(STORAGE_KEYS.host, JSON.stringify(cfg)); 
+      gameData.hostConfig = JSON.parse(JSON.stringify(cfg));
     }
 
     function getRanking() { 
-      try { 
-        return JSON.parse(localStorage.getItem(STORAGE_KEYS.rank) || '[]'); 
-      } catch (e) { 
-        return []; 
-      } 
+      return gameData.rankings || [];
     }
 
     function saveRanking(list) { 
-      localStorage.setItem(STORAGE_KEYS.rank, JSON.stringify(list)); 
+      gameData.rankings = JSON.parse(JSON.stringify(list));
     }
 
     // Initialize
@@ -907,32 +897,42 @@
     }
 
     function guess(letter) {
-      state.used.add(letter);
-      const btn = Array.from(elements.keyboardEl.children).find(b => b.textContent === letter);
-      if (btn) btn.disabled = true;
-      
-      const indices = [];
-      for (let i = 0; i < state.word.length; i++) {
-        if (state.word[i].toUpperCase() === letter) indices.push(i);
-      }
-      
-      if (indices.length) {
-        indices.forEach(i => state.revealed[i] = state.word[i]);
-        state.hits += 1;
-        updateWordDisplay();
-        updateHUD();
-        // Check if word is complete (only counting letters, not spaces)
-        const wordComplete = state.revealed.every((char, i) => 
-          char === state.word[i] || !/^[a-z]$/i.test(state.word[i])
-        );
-        if (wordComplete) endRound(true);
-      } else {
-        state.misses += 1;
-        state.lives -= 1;
-        updateHUD();
-        if (state.lives <= 0) endRound(false);
-      }
-    }
+  // Prevent guessing if round is ending or game is over
+  if (state.lives <= 0 || state.round > state.totalRounds) {
+    return;
+  }
+  
+  // Prevent duplicate guesses
+  if (state.used.has(letter)) {
+    return;
+  }
+  
+  state.used.add(letter);
+  const btn = Array.from(elements.keyboardEl.children).find(b => b.textContent === letter);
+  if (btn) btn.disabled = true;
+  
+  const indices = [];
+  for (let i = 0; i < state.word.length; i++) {
+    if (state.word[i].toUpperCase() === letter) indices.push(i);
+  }
+  
+  if (indices.length) {
+    indices.forEach(i => state.revealed[i] = state.word[i]);
+    state.hits += 1;
+    updateWordDisplay();
+    updateHUD();
+    // Check if word is complete (only counting letters, not spaces)
+    const wordComplete = state.revealed.every((char, i) => 
+      char === state.word[i] || !/^[a-z]$/i.test(state.word[i])
+    );
+    if (wordComplete) endRound(true);
+  } else {
+    state.misses += 1;
+    state.lives = Math.max(0, state.lives - 1); // Prevent negative lives
+    updateHUD();
+    if (state.lives <= 0) endRound(false);
+  }
+}
 
     function endRound(solved) {
       const base = hostCfg.scoreBase[state.tier];
@@ -970,6 +970,20 @@
       elements.screenFinale.classList.remove('hidden');
       elements.finalLine.textContent = `${state.ign} – ${state.pid} scored ${state.score} points.`;
       
+      // Save local score
+      const playerEntry = {
+        ign: state.ign,
+        pid: state.pid,
+        score: state.score,
+        date: new Date().toLocaleDateString()
+      };
+      
+      const ranks = getRanking();
+      ranks.push(playerEntry);
+      ranks.sort((a, b) => b.score - a.score);
+      saveRanking(ranks);
+      
+      // Show breakdown
       elements.breakdown.innerHTML = '';
       state.breakdown.forEach(line => {
         const li = document.createElement('li');
@@ -977,39 +991,22 @@
         elements.breakdown.appendChild(li);
       });
       
-      // Save to local rankings
-      const ranks = getRanking();
-      ranks.push({ ign: state.ign, pid: state.pid, score: state.score, date: new Date().toLocaleString() });
-      ranks.sort((a, b) => b.score - a.score);
-      saveRanking(ranks.slice(0, 100));
-      
-      // Submit to online rankings
-      await submitOnlineScore();
+      // Try to submit online score
+      if (onlineRankings.isOnline) {
+        elements.onlineSubmissionStatus.innerHTML = '<span class="footnote">Submitting score to global rankings...</span>';
+        
+        const result = await onlineRankings.submitScore(playerEntry);
+        
+        if (result.success) {
+          elements.onlineSubmissionStatus.innerHTML = `<span class="footnote success-msg">✅ Score submitted! Global rank: #${result.rank}</span>`;
+        } else {
+          elements.onlineSubmissionStatus.innerHTML = `<span class="footnote error-msg">Failed to submit global score: ${result.error}</span>`;
+        }
+      } else {
+        elements.onlineSubmissionStatus.innerHTML = '<span class="footnote">Offline - score saved locally only</span>';
+      }
       
       renderFinalRankings();
-    }
-
-    async function submitOnlineScore() {
-      const statusEl = elements.onlineSubmissionStatus;
-      
-      if (!onlineRankings.isOnline) {
-        statusEl.innerHTML = '<span class="error-msg">⚠️ Score saved locally only - no internet connection</span>';
-        return;
-      }
-      
-      statusEl.innerHTML = '<span class="footnote">📤 Submitting to online rankings...</span>';
-      
-      const result = await onlineRankings.submitScore({
-        ign: state.ign,
-        pid: state.pid,
-        score: state.score
-      });
-      
-      if (result.success) {
-        statusEl.innerHTML = `<span class="success-msg">✅ Score submitted! You ranked #${result.rank} globally!</span>`;
-      } else {
-        statusEl.innerHTML = `<span class="error-msg">⌫ Failed to submit online: ${result.error}</span>`;
-      }
     }
 
     function renderLocalRankings(tbody) {
@@ -1044,7 +1041,7 @@
         
         onlineRanks.forEach((r, idx) => {
           const tr = document.createElement('tr');
-          const date = new Date(r.date).toLocaleString();
+          const date = new Date(r.date).toLocaleDateString();
           tr.innerHTML = `<td>${idx + 1}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${date}</td>`;
           tbody.appendChild(tr);
         });
@@ -1142,7 +1139,7 @@
 
     elements.btnClearLeaderboard.onclick = () => {
       if (confirm('Clear all local scores? (This will not affect online rankings)')) {
-        localStorage.removeItem(STORAGE_KEYS.rank);
+        saveRanking([]);
         renderLocalRankings(elements.leaderboardLocalTable);
         alert('Local leaderboard cleared!');
       }
@@ -1152,12 +1149,10 @@
       elements.rankingsSection.classList.toggle('hidden');
       if (!elements.rankingsSection.classList.contains('hidden')) {
         renderLocalRankings(elements.leaderboardLocalTable);
-        // Don't auto-load online rankings to save API calls
       }
     };
 
-    elements.btnClearOnlineLeaderboard = document.getElementById('btnClearOnlineLeaderboard');
-     elements.btnClearOnlineLeaderboard.onclick = async () => {
+    elements.btnClearOnlineLeaderboard.onclick = async () => {
       if (!onlineRankings.isOnline) {
         alert('Cannot clear online leaderboard – not connected.');
         return;
@@ -1165,7 +1160,7 @@
       if (!confirm('⚠️ This will clear all global rankings. Continue?')) return;
       
       try {
-        onlineRankings.clearAllRankings();
+        await onlineRankings.clearAllRankings();
         alert('✅ Global leaderboard cleared!');
         
         // Refresh displays
