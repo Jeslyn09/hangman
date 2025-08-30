@@ -997,11 +997,49 @@
                 return a.timestamp - b.timestamp;
             });
 
-            // Find duplicate player IDs
+            // Find duplicate player IDs and their chronological order
             const pidCounts = {};
+            const pidChronology = {};
+            
+            // First pass: count duplicates and sort by timestamp for each PID
             rankings.forEach(player => {
                 pidCounts[player.pid] = (pidCounts[player.pid] || 0) + 1;
+                
+                if (!pidChronology[player.pid]) {
+                    pidChronology[player.pid] = [];
+                }
+                pidChronology[player.pid].push({
+                    timestamp: player.timestamp,
+                    date: player.date,
+                    score: player.score
+                });
             });
+
+            // Sort each player's entries by timestamp to determine chronological order
+            Object.keys(pidChronology).forEach(pid => {
+                pidChronology[pid].sort((a, b) => a.timestamp - b.timestamp);
+            });
+
+            function getChronologicalOrder(player) {
+                if (pidCounts[player.pid] <= 1) return null;
+                
+                const playerEntries = pidChronology[player.pid];
+                for (let i = 0; i < playerEntries.length; i++) {
+                    if (playerEntries[i].timestamp === player.timestamp) {
+                        return i + 1; // 1st, 2nd, 3rd, etc.
+                    }
+                }
+                return null;
+            }
+
+            function getOrdinalSuffix(num) {
+                const j = num % 10;
+                const k = num % 100;
+                if (j == 1 && k != 11) return num + "st";
+                if (j == 2 && k != 12) return num + "nd";
+                if (j == 3 && k != 13) return num + "rd";
+                return num + "th";
+            }
             
             rankings.forEach((player, index) => {
                 const rank = index + 1;
@@ -1014,6 +1052,8 @@
 
                 // Add duplicate highlighting
                 const isDuplicate = pidCounts[player.pid] > 1;
+                const chronoOrder = getChronologicalOrder(player);
+                
                 if (isDuplicate) {
                     row.classList.add('duplicate-player');
                 }
@@ -1025,7 +1065,7 @@
                     </td>
                     <td class="player-name">
                         ${player.ign}
-                        ${isDuplicate ? '<span class="duplicate-indicator">DUPLICATE</span>' : ''}
+                        ${isDuplicate ? `<span class="duplicate-indicator">DUPLICATE (${getOrdinalSuffix(chronoOrder)})</span>` : ''}
                     </td>
                     <td class="score">${player.score}</td>
                     <td><span class="player-id">${player.pid}</span></td>
