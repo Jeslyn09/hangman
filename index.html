@@ -14,6 +14,7 @@
       --good: #34d399;
       --bad: #f87171;
       --warn: #fbbf24;
+      --highlight: #fbbf24;
     }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color: var(--text); }
@@ -267,6 +268,118 @@
     .tab-btn.active:hover {
       background: var(--accent);
     }
+    
+    /* Rank highlighting styles */
+    .my-rank {
+      background-color: rgba(251, 191, 36, 0.15) !important;
+      border: 2px solid var(--highlight) !important;
+      font-weight: bold !important;
+    }
+    
+    .my-rank td {
+      color: var(--highlight) !important;
+      font-weight: bold !important;
+    }
+    
+    /* Top 3 rank styles */
+    .rank-1 {
+      background: linear-gradient(135deg, #ffd700, #ffed4e) !important;
+      color: #1a1a1a !important;
+      border: 2px solid #ffd700 !important;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
+    }
+    
+    .rank-1 td {
+      color: #1a1a1a !important;
+      font-weight: bold !important;
+    }
+    
+    .rank-2 {
+      background: linear-gradient(135deg, #c0c0c0, #e8e8e8) !important;
+      color: #1a1a1a !important;
+      border: 2px solid #c0c0c0 !important;
+      box-shadow: 0 0 10px rgba(192, 192, 192, 0.4) !important;
+    }
+    
+    .rank-2 td {
+      color: #1a1a1a !important;
+      font-weight: bold !important;
+    }
+    
+    .rank-3 {
+      background: linear-gradient(135deg, #cd7f32, #daa760) !important;
+      color: #1a1a1a !important;
+      border: 2px solid #cd7f32 !important;
+      box-shadow: 0 0 10px rgba(205, 127, 50, 0.4) !important;
+    }
+    
+    .rank-3 td {
+      color: #1a1a1a !important;
+      font-weight: bold !important;
+    }
+    
+    .medal-icon {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      font-size: 16px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    
+    /* Rank status bar */
+    .rank-status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(90deg, var(--surface), var(--muted));
+      border-top: 2px solid var(--highlight);
+      padding: 8px 16px;
+      z-index: 1000;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+    }
+    
+    .rank-status-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .rank-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+    }
+    
+    .rank-badge {
+      background: var(--highlight);
+      color: #0a0a0a;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    
+    @media (max-width: 600px) {
+      .rank-status-content {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+      }
+      
+      .rank-info {
+        font-size: 14px;
+        gap: 8px;
+      }
+    }
+    
     @media (max-width:700px){.grid-2{grid-template-columns:1fr}}
     
     @media (max-width: 600px) {
@@ -475,6 +588,19 @@
     </div>
   </div>
 
+  <!-- Rank Status Bar -->
+  <div id="rankStatusBar" class="rank-status-bar hidden">
+    <div class="rank-status-content">
+      <div class="rank-info">
+        <span class="rank-badge" id="currentRankBadge">#-</span>
+        <span id="currentRankText">Your current rank</span>
+      </div>
+      <div class="rank-info">
+        <span id="totalPlayersText">of - players</span>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Storage and Configuration
     const STORAGE_KEYS = { host: 'hangman_host_config_v1', rank: 'hangman_rankings_v1' };
@@ -645,6 +771,15 @@
       getRankings() {
         return this.rankings;
       }
+
+      // Find player's rank in current rankings
+      findPlayerRank(ign, pid) {
+        const rank = this.rankings.findIndex(r => 
+          r.ign.toLowerCase() === ign.toLowerCase() && 
+          r.pid === pid
+        ) + 1;
+        return rank || null;
+      }
     }
 
     // Initialize online rankings
@@ -740,7 +875,11 @@
       toggleLeaderboardBtn: document.getElementById('toggleLeaderboardBtn'),
       rankingsSection: document.getElementById('rankingsSection'),
       onlineRankingStatus: document.getElementById('onlineRankingStatus'),
-      onlineSubmissionStatus: document.getElementById('onlineSubmissionStatus')
+      onlineSubmissionStatus: document.getElementById('onlineSubmissionStatus'),
+      rankStatusBar: document.getElementById('rankStatusBar'),
+      currentRankBadge: document.getElementById('currentRankBadge'),
+      currentRankText: document.getElementById('currentRankText'),
+      totalPlayersText: document.getElementById('totalPlayersText')
     };
 
     // Initialize display
@@ -760,6 +899,30 @@
       round: 1, word: '', revealed: [], used: new Set(), lives: hostCfg.lives, 
       misses: 0, hits: 0, score: 0, breakdown: [], pools: { E: [], M: [], H: [] } 
     };
+
+    // Rank Status Functions
+    function updateRankStatusBar() {
+      if (!onlineRankings.isOnline || !state.ign || !state.pid) {
+        elements.rankStatusBar.classList.add('hidden');
+        return;
+      }
+
+      const rank = onlineRankings.findPlayerRank(state.ign, state.pid);
+      const totalPlayers = onlineRankings.getRankings().length;
+
+      if (rank) {
+        elements.currentRankBadge.textContent = `#${rank}`;
+        elements.currentRankText.textContent = `${state.ign} (${state.pid})`;
+        elements.totalPlayersText.textContent = `of ${totalPlayers} players`;
+        elements.rankStatusBar.classList.remove('hidden');
+      } else {
+        elements.rankStatusBar.classList.add('hidden');
+      }
+    }
+
+    function hideRankStatusBar() {
+      elements.rankStatusBar.classList.add('hidden');
+    }
 
     // Game Functions
     function shuffle(arr) {
@@ -897,42 +1060,42 @@
     }
 
     function guess(letter) {
-  // Prevent guessing if round is ending or game is over
-  if (state.lives <= 0 || state.round > state.totalRounds) {
-    return;
-  }
-  
-  // Prevent duplicate guesses
-  if (state.used.has(letter)) {
-    return;
-  }
-  
-  state.used.add(letter);
-  const btn = Array.from(elements.keyboardEl.children).find(b => b.textContent === letter);
-  if (btn) btn.disabled = true;
-  
-  const indices = [];
-  for (let i = 0; i < state.word.length; i++) {
-    if (state.word[i].toUpperCase() === letter) indices.push(i);
-  }
-  
-  if (indices.length) {
-    indices.forEach(i => state.revealed[i] = state.word[i]);
-    state.hits += 1;
-    updateWordDisplay();
-    updateHUD();
-    // Check if word is complete (only counting letters, not spaces)
-    const wordComplete = state.revealed.every((char, i) => 
-      char === state.word[i] || !/^[a-z]$/i.test(state.word[i])
-    );
-    if (wordComplete) endRound(true);
-  } else {
-    state.misses += 1;
-    state.lives = Math.max(0, state.lives - 1); // Prevent negative lives
-    updateHUD();
-    if (state.lives <= 0) endRound(false);
-  }
-}
+      // Prevent guessing if round is ending or game is over
+      if (state.lives <= 0 || state.round > state.totalRounds) {
+        return;
+      }
+      
+      // Prevent duplicate guesses
+      if (state.used.has(letter)) {
+        return;
+      }
+      
+      state.used.add(letter);
+      const btn = Array.from(elements.keyboardEl.children).find(b => b.textContent === letter);
+      if (btn) btn.disabled = true;
+      
+      const indices = [];
+      for (let i = 0; i < state.word.length; i++) {
+        if (state.word[i].toUpperCase() === letter) indices.push(i);
+      }
+      
+      if (indices.length) {
+        indices.forEach(i => state.revealed[i] = state.word[i]);
+        state.hits += 1;
+        updateWordDisplay();
+        updateHUD();
+        // Check if word is complete (only counting letters, not spaces)
+        const wordComplete = state.revealed.every((char, i) => 
+          char === state.word[i] || !/^[a-z]$/i.test(state.word[i])
+        );
+        if (wordComplete) endRound(true);
+      } else {
+        state.misses += 1;
+        state.lives = Math.max(0, state.lives - 1); // Prevent negative lives
+        updateHUD();
+        if (state.lives <= 0) endRound(false);
+      }
+    }
 
     function endRound(solved) {
       const base = hostCfg.scoreBase[state.tier];
@@ -963,6 +1126,7 @@
       setWord(pickWord());
       elements.screenLogin.classList.add('hidden');
       elements.screenGame.classList.remove('hidden');
+      hideRankStatusBar(); // Hide rank bar during game
     }
 
     async function finishGame() {
@@ -999,6 +1163,8 @@
         
         if (result.success) {
           elements.onlineSubmissionStatus.innerHTML = `<span class="footnote success-msg">✅ Score submitted! Global rank: #${result.rank}</span>`;
+          // Update rank status bar after submission
+          setTimeout(updateRankStatusBar, 500);
         } else {
           elements.onlineSubmissionStatus.innerHTML = `<span class="footnote error-msg">Failed to submit global score: ${result.error}</span>`;
         }
@@ -1015,7 +1181,29 @@
       
       ranks.forEach((r, idx) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${idx + 1}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${r.date}</td>`;
+        const rank = idx + 1;
+        
+        // Get medal icon for top 3
+        let medalIcon = '';
+        let rankClass = '';
+        if (rank === 1) {
+          medalIcon = '<span class="medal-icon">🥇</span>';
+          rankClass = 'rank-1';
+        } else if (rank === 2) {
+          medalIcon = '<span class="medal-icon">🥈</span>';
+          rankClass = 'rank-2';
+        } else if (rank === 3) {
+          medalIcon = '<span class="medal-icon">🥉</span>';
+          rankClass = 'rank-3';
+        }
+        
+        tr.innerHTML = `<td>${medalIcon}${rank}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${r.date}</td>`;
+        
+        // Add rank styling
+        if (rankClass) {
+          tr.classList.add(rankClass);
+        }
+        
         tbody.appendChild(tr);
       });
     }
@@ -1024,6 +1212,7 @@
       if (!onlineRankings.isOnline) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; opacity: 0.6;">Offline - online rankings unavailable</td></tr>';
         if (statusEl) statusEl.textContent = 'Connect to internet to view global rankings';
+        hideRankStatusBar();
         return;
       }
       
@@ -1036,20 +1225,53 @@
         if (onlineRanks.length === 0) {
           tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; opacity: 0.6;">No online scores yet - be the first!</td></tr>';
           if (statusEl) statusEl.textContent = 'No global scores recorded yet';
+          hideRankStatusBar();
           return;
         }
         
         onlineRanks.forEach((r, idx) => {
           const tr = document.createElement('tr');
           const date = new Date(r.date).toLocaleDateString();
-          tr.innerHTML = `<td>${idx + 1}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${date}</td>`;
+          const rank = idx + 1;
+          
+          // Get medal icon for top 3
+          let medalIcon = '';
+          let rankClass = '';
+          if (rank === 1) {
+            medalIcon = '<span class="medal-icon">🥇</span>';
+            rankClass = 'rank-1';
+          } else if (rank === 2) {
+            medalIcon = '<span class="medal-icon">🥈</span>';
+            rankClass = 'rank-2';
+          } else if (rank === 3) {
+            medalIcon = '<span class="medal-icon">🥉</span>';
+            rankClass = 'rank-3';
+          }
+          
+          tr.innerHTML = `<td>${medalIcon}${rank}</td><td>${r.ign}</td><td>${r.pid}</td><td><b>${r.score}</b></td><td>${date}</td>`;
+          
+          // Add rank styling (top 3 gets priority over my-rank styling)
+          if (rankClass) {
+            tr.classList.add(rankClass);
+          }
+          // Highlight current player's row (but don't override top 3 styling)
+          else if (state.ign && state.pid && 
+              r.ign.toLowerCase() === state.ign.toLowerCase() && 
+              r.pid === state.pid) {
+            tr.classList.add('my-rank');
+          }
+          
           tbody.appendChild(tr);
         });
         
         if (statusEl) statusEl.textContent = `${onlineRanks.length} global scores • Last updated: ${new Date().toLocaleString()}`;
+        
+        // Update rank status bar
+        updateRankStatusBar();
       } catch (error) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; opacity: 0.6;">Failed to load online rankings</td></tr>';
         if (statusEl) statusEl.textContent = 'Failed to load global rankings';
+        hideRankStatusBar();
       }
     }
 
@@ -1080,6 +1302,8 @@
           
           if (tab === 'online') {
             renderOnlineRankings(elements.leaderboardOnlineTable, elements.onlineRankingStatus);
+          } else {
+            hideRankStatusBar(); // Hide rank bar when viewing local rankings
           }
         } else {
           document.getElementById('finalLocalTable').classList.toggle('hidden', tab !== 'final-local');
@@ -1087,6 +1311,8 @@
           
           if (tab === 'final-online') {
             renderOnlineRankings(elements.rankBodyOnline);
+          } else {
+            hideRankStatusBar(); // Hide rank bar when viewing local rankings
           }
         }
       });
@@ -1149,6 +1375,13 @@
       elements.rankingsSection.classList.toggle('hidden');
       if (!elements.rankingsSection.classList.contains('hidden')) {
         renderLocalRankings(elements.leaderboardLocalTable);
+        // Show rank bar if viewing online rankings
+        const activeTab = elements.rankingsSection.querySelector('.tab-btn.active');
+        if (activeTab && activeTab.dataset.tab === 'online') {
+          updateRankStatusBar();
+        }
+      } else {
+        hideRankStatusBar(); // Hide rank bar when rankings section is closed
       }
     };
 
@@ -1168,6 +1401,7 @@
         if (elements.rankBodyOnline) {
           renderOnlineRankings(elements.rankBodyOnline);
         }
+        hideRankStatusBar(); // Hide rank bar after clearing
       } catch (err) {
         console.error(err);
         alert('⌫ Error clearing online leaderboard: ' + err.message);
@@ -1185,8 +1419,16 @@
     // Initialize
     setupTabs();
     renderLocalRankings(elements.leaderboardLocalTable);
+
+    // Auto-refresh rank status when online rankings are visible
+    setInterval(() => {
+      const isOnlineTabActive = document.querySelector('.tab-btn.active[data-tab="online"], .tab-btn.active[data-tab="final-online"]');
+      const isRankingsVisible = !elements.rankingsSection.classList.contains('hidden') || !elements.screenFinale.classList.contains('hidden');
+      
+      if (isOnlineTabActive && isRankingsVisible && onlineRankings.isOnline && state.ign && state.pid) {
+        updateRankStatusBar();
+      }
+    }, 5000); // Check every 5 seconds
   </script>
 </body>
 </html>
-
-          
